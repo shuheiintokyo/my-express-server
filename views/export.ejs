@@ -47,7 +47,7 @@
             color: black;
         }
         .out-of-range {
-            color: red;
+            color: black;
         }
         .inspection-box {
             margin: 10px 0;
@@ -275,22 +275,18 @@
                             const measurements = getMeasurements(item.filteredValues, selected_indices);
                             const inspectionData = item.inspectionValues || {};
                             %>
-                            <% for (let i = 0; i < 16; i++) { %>
+                            <% for (let i = 0; i < 15; i++) { %> <!-- Loop only up to index 14 -->
                                 <td>
-                                    <% if (i >= 0 && i =< 4) { %>
+                                    <% if (i >= 0 && i <= 3) { %>
                                         <%- measurements[i] || '-' %>
-                                    <% } else if (i === 5) { %>
-                                        <%= inspectionData[0] || '-' %>
+                                    <% } else if (i === 4 || i === 5) { %>
+                                        - <!-- Explicitly set 4th and 5th indices to "-" -->
                                     <% } else if (i === 6) { %>
-                                        <%= inspectionData[1] || '-' %>
-                                    <% } else if (i === 13) { %>
-                                        <%= inspectionData[2] || '-' %>
-                                    <% } else if (i === 14) { %>
-                                        <%= inspectionData[3] || '-' %>
-                                    <% } else if (i === 15) { %>
-                                        <%= inspectionData[4] || '-' %>
-                                    <% } else { %>
-                                        <%- measurements[i] || '-' %>
+                                        <%- measurements[6] || '-' %> <!-- Include the 6th index -->
+                                    <% } else if (i >= 7 && i <= 11) { %>
+                                        <%- measurements[i] || '-' %> <!-- Logic for 7th to 11th indices -->
+                                    <% } else if (i >= 12 && i <= 14) { %>
+                                        - <!-- Explicitly set 12th, 13th, and 14th indices to "-" -->
                                     <% } %>
                                 </td>
                             <% } %>
