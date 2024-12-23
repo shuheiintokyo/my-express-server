@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sample Page</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        border: 1px solid #ccc;
+        margin-top: 20px;
+      }
+
+      th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: center;
+      }
+
+      th {
+        background-color: #f4f4f4;
+      }
+
+      caption {
+        margin-bottom: 10px;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sample Page</h1>
+
+    <!-- Render selected files data -->
+    <div id="fileDataContainer"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const selectedFiles = JSON.parse(sessionStorage.getItem("selectedFiles")) || [];
+        const fileDataContainer = document.getElementById("fileDataContainer");
+
+        if (selectedFiles.length > 0) {
+          selectedFiles.forEach(fileName => {
+            const fileData = tableData.find(data => data.fileName === fileName);
+            if (fileData) {
+              const table = document.createElement("table");
+              const caption = document.createElement("caption");
+              caption.textContent = `File: ${fileData.fileName}`;
+              table.appendChild(caption);
+
+              const thead = document.createElement("thead");
+              const tr = document.createElement("tr");
+              selected_indices.forEach(index => {
+                const th = document.createElement("th");
+                th.textContent = index || "";
+                tr.appendChild(th);
+              });
+              thead.appendChild(tr);
+              table.appendChild(thead);
+
+              const tbody = document.createElement("tbody");
+              const trBody = document.createElement("tr");
+              fileData.values.forEach((value, i) => {
+                if (selected_indices.includes(i + 1)) {
+                  const td = document.createElement("td");
+                  td.textContent = value;
+                  trBody.appendChild(td);
+                }
+              });
+              tbody.appendChild(trBody);
+              table.appendChild(tbody);
+
+              fileDataContainer.appendChild(table);
+            }
+          });
+        } else {
+          const noFilesMessage = document.createElement("p");
+          noFilesMessage.textContent = "No files selected. Please select files to view data.";
+          fileDataContainer.appendChild(noFilesMessage);
+        }
+      });
+    </script>
+  </body>
+</html>

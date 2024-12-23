@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        border: 1px solid #ccc;
+        margin-top: 20px;
+        margin-bottom: 40px;
+      }
+
+      th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: right;
+      }
+
+      th {
+        background-color: #f4f4f4;
+        text-align: center;
+      }
+
+      td:first-child {
+        text-align: left;
+      }
+
+      caption {
+        margin-bottom: 10px;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+    </style>
+    <script>
+      let tableData = []; // Data storage for tables
+      const selected_indices = [103, 99, 177, 158, "", "", 114, 182, 193, 79, 148, 174];
+
+      // Function to process numerical data
+      function processFileData(content) {
+        // Split by newlines and semicolons, then flatten the array
+        const allValues = content
+          .split(/\n/)
+          .map(line => line.split(';'))
+          .flat()
+          .filter(item => item.trim() !== '');
+
+        // Convert to numbers and round to 2 decimal places
+        const numericalData = allValues
+          .map(value => {
+            try {
+              return Number(parseFloat(value).toFixed(2));
+            } catch {
+              return null;
+            }
+          })
+          .filter(value => value !== null && !isNaN(value));
+
+        return numericalData;
+      }
+
+      // Function to handle file upload and render content
+      function handleFileUpload(event) {
+        const files = Array.from(event.target.files);
+        const resultsContainer = document.getElementById("results-container");
+        resultsContainer.innerHTML = ""; // Clear previous data
+        tableData = []; // Clear previous session data
+
+        files.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const numericalData = processFileData(e.target.result);
+            const fileName = file.name.replace(".txt", "");
+            
+            // Store processed numerical data
+            tableData.push({
+              fileName,
+              values: numericalData
+            });
+
+            // Create table for display
+            const table = document.createElement("table");
+            const caption = document.createElement("caption");
+            caption.textContent = `File: ${fileName}`;
+            table.appendChild(caption);
+
+            // Add header row
+            const headerRow = document.createElement("tr");
+            const fileHeader = document.createElement("th");
+            fileHeader.textContent = "File";
+            headerRow.appendChild(fileHeader);
+            
+            // Add index headers
+            numericalData.forEach((_, index) => {
+              const th = document.createElement("th");
+              th.textContent = index + 1; // 1-based indexing
+              headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            // Add values row
+            const valuesRow = document.createElement("tr");
+            const fileCell = document.createElement("td");
+            fileCell.textContent = fileName;
+            valuesRow.appendChild(fileCell);
+            
+            numericalData.forEach((value) => {
+              const td = document.createElement("td");
+              td.textContent = value.toFixed(2); // Format to 2 decimal places
+              valuesRow.appendChild(td);
+            });
+            table.appendChild(valuesRow);
+
+            resultsContainer.appendChild(table);
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      // Save the current table data to sessionStorage
+      function saveData() {
+        sessionStorage.setItem("tableData", JSON.stringify(tableData));
+        alert("Data saved to session!");
+      }
+
+      // Export filtered data and redirect to export.ejs
+      function exportData() {
+        const filteredData = tableData.map(({ fileName, values }) => {
+          const filteredValues = selected_indices.map((index) => {
+            // Convert 1-based index to 0-based index
+            const arrayIndex = index !== "" ? parseInt(index) - 1 : -1;
+            return arrayIndex >= 0 && arrayIndex < values.length ? values[arrayIndex] : "";
+          });
+          return { fileName, filteredValues };
+        });
+
+        // Send data to server using fetch
+        fetch("/export", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ exportData: filteredData })
+        })
+        .then(response => {
+          if (response.ok) {
+            window.location.href = "/export";
+          } else {
+            console.error("Failed to export data");
+          }
+        })
+        .catch(error => console.error("Error:", error));
+      }
+
+      // Navigate to the inspection sheet page
+      function goToInspectionSheet() {
+        window.location.href = "/inspection-sheet";
+      }
+    </script>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+
+    <!-- File upload -->
+    <div>
+      <label for="file-upload">Upload .txt files:</label>
+      <input type="file" id="file-upload" accept=".txt" multiple onchange="handleFileUpload(event)" />
+    </div>
+
+    <!-- Buttons -->
+    <div style="margin-top: 20px;">
+      <button onclick="saveData()">Save</button>
+      <button onclick="exportData()">Export</button>
+      <button onclick="goToInspectionSheet()">Go to Inspection Sheet</button>
+    </div>
+
+    <!-- Results container -->
+    <div id="results-container"></div>
+  </body>
+</html>
