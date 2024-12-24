@@ -91,6 +91,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Inspection Controls -->
     <div id="inspectionControls" class="hidden">
@@ -106,7 +107,7 @@
                 <div class="navigation-buttons">
                     <button onclick="previousFile()">前へ</button>
                     <button onclick="nextFile()">次へ</button>
-                    <button onclick="applyValues()" class="apply-button">反映</button>
+                    <button onclick="applyValues()" class="apply-button">閉じる</button>
                 </div>
             </div>
         </div>
@@ -403,6 +404,9 @@
             gap: 10px;
             margin-top: 10px;
         }
+        .hidden {
+        display: none !important;
+        }    
         `;
         document.head.appendChild(style);
 
@@ -419,15 +423,13 @@
                     if (index >= selected_indices.length) return;
                     const columnIndex = selected_indices[index];
 
-                    
-                    
                     if (tableIndex !== undefined && value !== '' && value != null) {
                         const numberValue = Number(value);
                         if (isNaN(numberValue)) {
                             console.warn(`Invalid number value at index ${index}: ${value}`);
                             return;
                         }
-        
+
                         const numValue = Math.abs(numberValue).toFixed(2);
                         const limits = measurementLimits[tableIndex];
                         const isOutOfRange = limits && (numValue < limits.min || numValue > limits.max);
@@ -590,15 +592,21 @@
         // Initialize inspector if data is available
         if (inspectionData && inspectionData.length > 0) {
             document.getElementById('inspectorButton').disabled = false;
+
             // Add navigation buttons
             const controls = document.querySelector('.inspection-controls');
-            const navButtons = document.createElement('div');
+            
+            let navButtons = controls.querySelector('.navigation-buttons');
+
+        if (!navButtons) { // Check if navigation buttons already exist
+            navButtons = document.createElement('div');
+            navButtons.classList.add('navigation-buttons'); // Add a class for identification
             navButtons.innerHTML = `
                 <button onclick="previousFile()">前へ</button>
-                <button onclick="nextFile()">次へ</button>
+                <button onclick="nextFile()">次へ</button>  
             `;
             controls.appendChild(navButtons);
-        } else {
+        } }else {
             document.getElementById('inspectorButton').disabled = true;
         }
     </script>
