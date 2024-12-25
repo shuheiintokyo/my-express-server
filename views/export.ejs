@@ -107,7 +107,7 @@
                 <div class="navigation-buttons">
                     <button onclick="previousFile()">前へ</button>
                     <button onclick="nextFile()">次へ</button>
-                    <button onclick="applyValues()" class="apply-button">閉じる</button>
+                    <button onclick="applyValues(true)" class="apply-button">閉じる</button>
                 </div>
             </div>
         </div>
@@ -537,48 +537,125 @@
             });
         });
 
-        // Navigation functions for inspection
+
+
+        function updateInspectionControls() {
+            const currentData = inspectionData[currentFileIndex];
+            const buttons = document.querySelectorAll('.toggle-button');
+            const input = document.querySelector('.number-input');
+            
+            // Reset all buttons and input first
+            buttons.forEach(button => {
+                button.textContent = '-';
+                button.className = 'toggle-button';
+            });
+            input.value = '';
+            
+            // Update with current data if available
+            if (currentData && currentData.inspectionValues) {
+                buttons.forEach((button, index) => {
+                    const value = currentData.inspectionValues[index];
+                    if (value === '合' || value === '否') {
+                        button.textContent = value;
+                        button.className = `toggle-button ${value === '合' ? 'toggle-green' : 'toggle-red'}`;
+                    }
+                });
+                
+                // Update number input if value exists
+                if (currentData.inspectionValues[4] !== undefined) {
+                    input.value = currentData.inspectionValues[4];
+                }
+            }
+        }
+
         function nextFile() {
             if (currentFileIndex < inspectionData.length - 1) {
+                applyValues(false);  // Don't close when navigating
                 currentFileIndex++;
                 updateCurrentFile();
                 updateInspectionControls();
             }
         }
-
+        
         function previousFile() {
             if (currentFileIndex > 0) {
+                applyValues(false);  // Don't close when navigating
                 currentFileIndex--;
                 updateCurrentFile();
                 updateInspectionControls();
             }
         }
 
-        function updateInspectionControls() {
-            const currentData = inspectionData[currentFileIndex];
-            if (currentData && currentData.inspectionValues) {
-                const buttons = document.querySelectorAll('.toggle-button');
-                const input = document.querySelector('.number-input');
-                
-                buttons.forEach((button, index) => {
-                    const value = currentData.inspectionValues[index];
-                    if (value === '合' || value === '否') {
-                        button.textContent = value;
-                        button.className = 'toggle-button ' + (value === '合' ? 'toggle-green' : 'toggle-red');
-                    } else {
-                        button.textContent = '-';
-                        button.className = 'toggle-button';
+        function applyValues(shouldClose = false) {  // Add parameter to control closing behavior
+            const buttons = document.querySelectorAll('.toggle-button');
+            const input = document.querySelector('.number-input');
+            const values = [];
+            const controls = document.getElementById('inspectionControls');
+            
+            buttons.forEach(button => {
+                values.push(button.textContent);
+            });
+            values.push(input.value);
+        
+            // Store values in inspectionData
+            if (!inspectionData[currentFileIndex].inspectionValues) {
+                inspectionData[currentFileIndex].inspectionValues = [];
+            }
+            values.forEach((value, index) => {
+                inspectionData[currentFileIndex].inspectionValues[index] = value;
+            });
+        
+            // Update the table row immediately
+            const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
+            if (row) {
+                values.forEach((value, index) => {
+                    const mappedIndex = [5, 6, 13, 14, 15][index];
+                    if (mappedIndex !== undefined) {
+                        const cell = row.children[mappedIndex];
+                        if (cell) {
+                            cell.textContent = value || '-';
+                        }
                     }
                 });
-
-                if (currentData.inspectionValues[4]) {
-                    input.value = currentData.inspectionValues[4];
-                } else {
-                    input.value = '';
-                }
             }
+        
+            // Only hide controls if shouldClose is true
+            if (shouldClose) {
+                controls.classList.add('hidden');
+            }
+        
+            // Try to save to server in the background
+            fetch('/api/inspection/apply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fileIndex: currentFileIndex,
+                    values: values
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data saved successfully');
+            })
+            .catch(error => {
+                console.warn('Warning: Could not save to server:', error);
+            });
         }
-
+        
+        // Also let's add a function to check if the controls are properly toggling
+        function toggleInspector() {
+            const controls = document.getElementById('inspectionControls');
+            console.log('Toggle - Before:', controls.classList.contains('hidden')); // Debug log
+            controls.classList.toggle('hidden');
+            console.log('Toggle - After:', controls.classList.contains('hidden')); // Debug log
+        }
         // Add keyboard navigation
         document.addEventListener('keydown', function(e) {
             if (!document.getElementById('inspectionControls').classList.contains('hidden')) {

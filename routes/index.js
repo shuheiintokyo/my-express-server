@@ -1,39 +1,25 @@
-var express = require('express');
-var router = express.Router();
+// routes/index.js - Main routes
+const express = require('express');
+const router = express.Router();
+const { selected_indices } = require('../config/measurements');
 
-// Home route
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get('/', function(req, res) {
+    res.render('index', { 
+        title: 'Express',
+        tableData: req.session.tableData || [],
+        selected_indices
+    });
 });
 
-
-// Handle POST /export
-router.post("/", (req, res) => {
-  try {
-    const { exportData, tableData } = req.body;
-
-    // Validate incoming data
-    if (!tableData) {
-      return res.status(400).send("No table data provided.");
+router.post('/save-table-data', (req, res) => {
+    try {
+        const { tableData } = req.body;
+        req.session.tableData = tableData;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error saving table data:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
-
-    // Parse tableData
-    const parsedData = JSON.parse(tableData);
-
-    // Save exportData in session if it exists
-    if (exportData) {
-      req.session.exportData = exportData;
-    }
-
-    // Render export page with the parsed data
-    res.render("export", {
-      title: "Export Page", // Provide a valid title
-      data: parsedData      // Pass parsed table data
-    });
-  } catch (error) {
-    console.error("Error in POST /export:", error.message);
-    res.status(500).send("Internal Server Error");
-  }
 });
 
 module.exports = router;
