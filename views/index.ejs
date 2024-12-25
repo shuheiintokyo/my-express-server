@@ -67,62 +67,81 @@
         const resultsContainer = document.getElementById("results-container");
         resultsContainer.innerHTML = ""; // Clear previous data
         tableData = []; // Clear previous session data
-
-        files.sort((a, b) => {
-          const numA = parseInt(a.name.replace(".txt", ""));
-          const numB = parseInt(b.name.replace(".txt", ""));
-          return numA - numB; // Sort in ascending order
-        });
-
-        files.forEach((file) => {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const numericalData = processFileData(e.target.result);
-            const fileName = file.name.replace(".txt", "");
+        
+        // Create an array to store promises for all file reads
+        const fileReadPromises = files
+          .sort((a, b) => {
+            // Extract numbers from filenames and handle potential non-numeric parts
+            const getNumber = (filename) => {
+              const match = filename.match(/\d+/);
+              return match ? parseInt(match[0]) : 0;
+            };
             
-            // Store processed numerical data
-            tableData.push({
-              fileName,
-              values: numericalData
+            const numA = getNumber(a.name);
+            const numB = getNumber(b.name);
+            return numA - numB;
+          })
+          .map(file => {
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                resolve({
+                  fileName: file.name.replace(".txt", ""),
+                  content: e.target.result
+                });
+              };
+              reader.readAsText(file);
             });
+          });
 
-            // Create table for display
-            const table = document.createElement("table");
-            const caption = document.createElement("caption");
-            caption.textContent = `File: ${fileName}`;
-            table.appendChild(caption);
+        // Process all files in order after they're read
+        Promise.all(fileReadPromises)
+          .then(fileContents => {
+            fileContents.forEach(({ fileName, content }) => {
+              const numericalData = processFileData(content);
+              
+              // Store processed numerical data
+              tableData.push({
+                fileName,
+                values: numericalData
+              });
 
-            // Add header row
-            const headerRow = document.createElement("tr");
-            const fileHeader = document.createElement("th");
-            fileHeader.textContent = "File";
-            headerRow.appendChild(fileHeader);
-            
-            // Add index headers
-            numericalData.forEach((_, index) => {
-              const th = document.createElement("th");
-              th.textContent = index + 1; // 1-based indexing
-              headerRow.appendChild(th);
+              // Create table for display
+              const table = document.createElement("table");
+              const caption = document.createElement("caption");
+              caption.textContent = `File: ${fileName}`;
+              table.appendChild(caption);
+
+              // Add header row
+              const headerRow = document.createElement("tr");
+              const fileHeader = document.createElement("th");
+              fileHeader.textContent = "File";
+              headerRow.appendChild(fileHeader);
+              
+              // Add index headers
+              numericalData.forEach((_, index) => {
+                const th = document.createElement("th");
+                th.textContent = index + 1; // 1-based indexing
+                headerRow.appendChild(th);
+              });
+              table.appendChild(headerRow);
+
+              // Add values row
+              const valuesRow = document.createElement("tr");
+              const fileCell = document.createElement("td");
+              fileCell.textContent = fileName;
+              valuesRow.appendChild(fileCell);
+              
+              numericalData.forEach((value) => {
+                const td = document.createElement("td");
+                td.textContent = value.toFixed(2); // Format to 2 decimal places
+                valuesRow.appendChild(td);
+              });
+              table.appendChild(valuesRow);
+
+              resultsContainer.appendChild(table);
             });
-            table.appendChild(headerRow);
-
-            // Add values row
-            const valuesRow = document.createElement("tr");
-            const fileCell = document.createElement("td");
-            fileCell.textContent = fileName;
-            valuesRow.appendChild(fileCell);
-            
-            numericalData.forEach((value) => {
-              const td = document.createElement("td");
-              td.textContent = value.toFixed(2); // Format to 2 decimal places
-              valuesRow.appendChild(td);
-            });
-            table.appendChild(valuesRow);
-
-            resultsContainer.appendChild(table);
-          };
-          reader.readAsText(file);
-        });
+          });
       }
 
       // Save the current table data to sessionStorage
