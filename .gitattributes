@@ -1,0 +1,2 @@
+# Ensure all text files use LF in the repo but CRLF on Windows
+* text=auto
