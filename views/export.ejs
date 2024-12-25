@@ -21,7 +21,7 @@
         }
         th, td {
             border: 1px solid black;
-            padding: 5px;
+            padding: 1px;
             text-align: center;
         }
         th {
@@ -93,7 +93,14 @@
             .button-container {
             display: none;
             }
+            .smaller-text {
+                font-size: 11px; /* Reduce font size for printing */
+              }
+            .editable {
+                border: none;  /* Remove border when printing */
+            }
         }
+        
     </style>
 </head>
 
@@ -144,7 +151,7 @@
             <div>単位（ｍｍ）</div>
         </div>
 
-        <table>
+        <table class="smaller-text">
             <thead>
                 <tr>
                     <th>項目</th>
