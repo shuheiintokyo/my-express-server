@@ -118,6 +118,7 @@
             body {
                 margin: 10px; 
             }
+        }
         
     </style>
 </head>
@@ -162,8 +163,25 @@
                 <strong>検査方法:</strong> 全数検査
                 <strong>検査日:</strong> <%= new Date().toLocaleDateString() %>
             </div>
-            <div class="company-info">㈱平田商店</div>
+            <div class="company-info">㈱平田商店</div>   
         </div>
+        <div class="header-info">
+            <!-- Existing header content -->
+            <div style="margin-left: auto;">
+                <button id="quickApproveButton" 
+                        style="width: 48px; 
+                               height: 48px; 
+                               border-radius: 50%; 
+                               background-color: white; 
+                               color: white; 
+                               border: none; 
+                               font-weight: bold; 
+                               cursor: pointer;
+                               box-shadow: 0 2px 4px white;"
+                        title="一括承認">?????</button>
+            </div>
+        </div>
+        
         
         <div class="note">
             <div>単位（ｍｍ）</div>
@@ -717,6 +735,50 @@
         } }else {
             document.getElementById('inspectorButton').disabled = true;
         }
+
+        // Add this to your existing script section
+function applyMassApproval() {
+    // Get all rows except header rows (start from index 7)
+    const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
+    
+    // For each row, update the cells at indices 5, 6, 13, and 14
+    rows.forEach((row, rowIndex) => {
+        const targetIndices = [5, 6, 13, 14];
+        targetIndices.forEach(colIndex => {
+            const cell = row.children[colIndex];
+            if (cell) {
+                cell.textContent = '合';
+            }
+        });
+
+        // Update the inspection data in memory
+        if (inspectionData && inspectionData[rowIndex]) {
+            if (!inspectionData[rowIndex].inspectionValues) {
+                inspectionData[rowIndex].inspectionValues = [];
+            }
+            [5, 6, 13, 14].forEach((index, i) => {
+                inspectionData[rowIndex].inspectionValues[i] = '合';
+            });
+        }
+    });
+
+    // Save to server
+    fetch('/api/inspection/mass-approve', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            indices: [5, 6, 13, 14],
+            value: '合'
+        })
+    })
+    .catch(error => console.warn('Warning: Could not save mass approval to server:', error));
+    }
+
+    // Add event listener for the quick approve button
+    document.getElementById('quickApproveButton').addEventListener('click', applyMassApproval);
+
     </script>
 </body>
 </html>

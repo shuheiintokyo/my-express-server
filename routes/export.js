@@ -51,4 +51,32 @@ router.post('/inspection/update', (req, res) => {
     }
 });
 
+// Add this to your existing routes in export.js
+router.post('/inspection/mass-approve', (req, res) => {
+    try {
+        const { indices, value } = req.body;
+        const exportData = req.session.exportData;
+
+        if (!exportData) {
+            return res.status(400).json({ error: 'No export data available' });
+        }
+
+        // Update all files in the export data
+        exportData.forEach(file => {
+            if (!file.inspectionValues) {
+                file.inspectionValues = {};
+            }
+            indices.forEach(index => {
+                file.inspectionValues[index] = value;
+            });
+        });
+
+        req.session.exportData = exportData;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error applying mass approval:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
 module.exports = router;
