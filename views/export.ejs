@@ -89,17 +89,35 @@
         .sample-row {
             background-color: #f8f8f8;
         }
+        .company-info{
+                text-align: end;
+            }
         @media print {
             .button-container {
-            display: none;
+                display: none;
             }
             .smaller-text {
-                font-size: 11px; /* Reduce font size for printing */
-              }
-            .editable {
-                border: none;  /* Remove border when printing */
+                font-size: 11px;
             }
-        }
+            .editable {
+                border: none;
+            }
+            .page-break { /* Add page-break class */
+                page-break-before: always;
+            }
+            .header-info {
+              display: block; /* Ensure header is block for printing */
+            }
+            .header-info-print{
+                display: flex;
+                justify-content: space-between;
+            }
+            .company-info{
+                text-align: end;
+            }
+            body {
+                margin: 10px; 
+            }
         
     </style>
 </head>
@@ -144,7 +162,7 @@
                 <strong>検査方法:</strong> 全数検査
                 <strong>検査日:</strong> <%= new Date().toLocaleDateString() %>
             </div>
-            <div>㈱平田商店</div>
+            <div class="company-info">㈱平田商店</div>
         </div>
         
         <div class="note">

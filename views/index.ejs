@@ -4,6 +4,7 @@
     <title><%= title %></title>
     <link rel="stylesheet" href="/stylesheets/style.css" />
     <style>
+      /* Previous styles remain the same */
       table {
         border-collapse: collapse;
         width: 100%;
@@ -32,10 +33,86 @@
         font-weight: bold;
         font-size: 1.2em;
       }
+
+      /* Enhanced styles for file blocks */
+      .uploaded-files {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .uploaded-files h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #333;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 10px;
+      }
+
+      .file-blocks-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .file-item {
+        display: inline-block;
+        padding: 12px 20px;
+        background-color: white;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 120px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .file-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+
+      .file-item.selected {
+        background-color: #90EE90;
+        border-color: #4CAF50;
+        color: #2E7D32;
+        font-weight: bold;
+      }
+
+      .export-button {
+        padding: 12px 24px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .export-button:hover:not(:disabled) {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+      }
+
+      .export-button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .selection-info {
+        margin-top: 10px;
+        color: #666;
+        font-size: 0.9em;
+      }
     </style>
     <script>
       let tableData = window.initialTableData || []; // Initialize with session data if available
       const selected_indices = [103, 99, 177, 158, "", "", 114, 182, 193, 79, 148, 174];
+      let selectedFiles = new Set();
 
       function processFileData(content) {
         try {
@@ -55,6 +132,32 @@
           console.error('Error processing file data:', error);
           return [];
         }
+      }
+
+      function updateUploadedFiles() {
+        const uploadedFilesContainer = document.getElementById("uploaded-files");
+        uploadedFilesContainer.innerHTML = '<h3>Uploaded Files:</h3>';
+        
+        tableData.forEach(({ fileName }) => {
+          const fileItem = document.createElement("div");
+          fileItem.className = `file-item ${selectedFiles.has(fileName) ? 'selected' : ''}`;
+          fileItem.textContent = fileName;
+          fileItem.onclick = () => toggleFileSelection(fileName);
+          uploadedFilesContainer.appendChild(fileItem);
+        });
+
+        // Update export button state
+        const exportButton = document.getElementById("export-button");
+        exportButton.disabled = selectedFiles.size === 0;
+      }
+
+      function toggleFileSelection(fileName) {
+        if (selectedFiles.has(fileName)) {
+          selectedFiles.delete(fileName);
+        } else {
+          selectedFiles.add(fileName);
+        }
+        updateUploadedFiles();
       }
 
       function createTable(fileName, numericalData) {
@@ -112,6 +215,7 @@
         const resultsContainer = document.getElementById("results-container");
         resultsContainer.innerHTML = "";
         tableData = [];
+        selectedFiles.clear();
 
         try {
           // Sort files by numeric value in filename
@@ -144,20 +248,23 @@
           });
 
           await saveToSession(tableData);
+          updateUploadedFiles();
         } catch (error) {
           console.error('Error handling files:', error);
-          alert('Error processing files. Please try again.');
+          // alert('Error processing files. Please try again.');
         }
       }
 
       async function exportData() {
         try {
-          const filteredData = tableData.map(({ fileName, values }) => ({
-            fileName,
-            filteredValues: selected_indices.map(index => {
-              const arrayIndex = index !== "" ? parseInt(index) - 1 : -1;
-              return arrayIndex >= 0 && arrayIndex < values.length ? values[arrayIndex] : "";
-            })
+          const filteredData = tableData
+            .filter(({ fileName }) => selectedFiles.has(fileName))
+            .map(({ fileName, values }) => ({
+              fileName,
+              filteredValues: selected_indices.map(index => {
+                const arrayIndex = index !== "" ? parseInt(index) - 1 : -1;
+                return arrayIndex >= 0 && arrayIndex < values.length ? values[arrayIndex] : "";
+              })
           }));
 
           const response = await fetch("/export", {
@@ -182,10 +289,6 @@
         }
       }
 
-      function goToInspectionSheet() {
-        window.location.href = "/inspection-sheet";
-      }
-
       // Initialize data from session
       document.addEventListener('DOMContentLoaded', () => {
         const resultsContainer = document.getElementById("results-container");
@@ -193,6 +296,7 @@
           tableData.forEach(({ fileName, values }) => {
             resultsContainer.appendChild(createTable(fileName, values));
           });
+          updateUploadedFiles();
         }
       });
     </script>
@@ -206,9 +310,13 @@
       <input type="file" id="file-upload" accept=".txt" multiple onchange="handleFileUpload(event)" />
     </div>
 
+    <div class="uploaded-files" id="uploaded-files">
+      <h3>Uploaded Files:</h3>
+    </div>
+
+
     <div style="margin-top: 20px;">
       <button onclick="exportData()">Export</button>
-      <button onclick="goToInspectionSheet()">Go to Inspection Sheet</button>
     </div>
 
     <div id="results-container"></div>
