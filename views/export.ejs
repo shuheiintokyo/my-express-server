@@ -355,6 +355,8 @@
         <button onclick="window.location.href='/'">アップロードに戻る</button>
         <button onclick="window.print()">印刷</button>
         <button id="inspectorButton" onclick="toggleInspector()">検査</button>
+        <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
+        <button onclick="document.getElementById('csvFileInput').click()">重量データ インポート</button>
     </div>
 
     <script>
@@ -737,7 +739,7 @@
         }
 
         // Add this to your existing script section
-function applyMassApproval() {
+    function applyMassApproval() {
     // Get all rows except header rows (start from index 7)
     const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
     
@@ -778,6 +780,87 @@ function applyMassApproval() {
 
     // Add event listener for the quick approve button
     document.getElementById('quickApproveButton').addEventListener('click', applyMassApproval);
+
+    function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const rows = text.split('\n');
+        // Skip header row and create weight data map
+        const weightMap = new Map();
+        
+        // Start from index 1 to skip header
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i].trim();
+            if (!row) continue;
+            
+            const [fileNumber, weight] = row.split(',');
+            if (fileNumber && weight) {
+                weightMap.set(fileNumber.trim(), weight.trim());
+            }
+        }
+
+        // Update the table with weight values
+        updateTableWithWeights(weightMap);
+        };
+        reader.readAsText(file);
+    }
+
+    function updateTableWithWeights(weightMap) {
+    // Get all rows except header rows (start from index 7)
+    const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
+    
+    rows.forEach(row => {
+        // Get the fileName from the first cell
+        const fileNameCell = row.cells[0];
+        const fileName = fileNameCell.textContent.trim();
+        
+        // If we have weight data for this file
+        if (weightMap.has(fileName)) {
+            // Update the 15th column (index 14)
+            const weightCell = row.cells[15];
+            const weight = weightMap.get(fileName);
+            weightCell.textContent = weight;
+            
+            // Update inspection data in memory
+            const rowIndex = Array.from(rows).indexOf(row);
+            if (inspectionData && inspectionData[rowIndex]) {
+                if (!inspectionData[rowIndex].inspectionValues) {
+                    inspectionData[rowIndex].inspectionValues = {};
+                }
+                inspectionData[rowIndex].inspectionValues[15] = weight;
+            }
+        }
+    });
+
+    // Save updated data to server
+    saveWeightData(Object.fromEntries(weightMap));
+    }
+
+    function saveWeightData(weightData) {
+    fetch('/api/inspection/weight-import', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ weightData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('重量データを正常にインポートしました。');
+        } else {
+            alert('データの保存中にエラーが発生しました。');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving weight data:', error);
+    //     alert('エラーが発生しました。');
+    });
+    }
 
     </script>
 </body>
