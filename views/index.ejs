@@ -4,7 +4,6 @@
     <title><%= title %></title>
     <link rel="stylesheet" href="/stylesheets/style.css" />
     <style>
-      /* Previous styles remain the same */
       table {
         border-collapse: collapse;
         width: 100%;
@@ -34,7 +33,6 @@
         font-size: 1.2em;
       }
 
-      /* Enhanced styles for file blocks */
       .uploaded-files {
         margin: 20px 0;
         padding: 15px;
@@ -54,6 +52,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+        margin-top: 15px;
       }
 
       .file-item {
@@ -90,6 +89,7 @@
         cursor: pointer;
         font-size: 16px;
         transition: all 0.3s ease;
+        margin-top: 20px;
       }
 
       .export-button:hover:not(:disabled) {
@@ -103,53 +103,52 @@
         transform: none;
       }
 
-      .selection-info {
-        margin-top: 10px;
+      .no-files-message {
+        text-align: center;
+        padding: 20px;
         color: #666;
-        font-size: 0.9em;
+        font-style: italic;
       }
     </style>
+    
     <script>
-      let tableData = window.initialTableData || []; // Initialize with session data if available
-      const selected_indices = [103, 99, 177, 158, "", "", 114, 182, 193, 79, 148, 174];
+      // Initialize data from server
+      window.initialTableData = <%- JSON.stringify(tableData) %>;
+      const selected_indices = <%- JSON.stringify(selected_indices) %>;
+      
+      let tableData = window.initialTableData || [];
       let selectedFiles = new Set();
 
-      function processFileData(content) {
-        try {
-          const allValues = content
-            .split(/\n/)
-            .map(line => line.split(';'))
-            .flat()
-            .filter(item => item.trim() !== '');
-
-          return allValues
-            .map(value => {
-              const number = Number(parseFloat(value).toFixed(2));
-              return !isNaN(number) ? Math.abs(number) : null;
-            })
-            .filter(value => value !== null);
-        } catch (error) {
-          console.error('Error processing file data:', error);
-          return [];
-        }
-      }
+      console.log('Initial table data:', tableData);
 
       function updateUploadedFiles() {
         const uploadedFilesContainer = document.getElementById("uploaded-files");
-        uploadedFilesContainer.innerHTML = '<h3>Uploaded Files:</h3>';
+        uploadedFilesContainer.innerHTML = '<h3>Available Files:</h3>';
+        const fileBlocksContainer = document.createElement("div");
+        fileBlocksContainer.className = "file-blocks-container";    
         
-        tableData.forEach(({ fileName }) => {
-          const fileItem = document.createElement("div");
-          fileItem.className = `file-item ${selectedFiles.has(fileName) ? 'selected' : ''}`;
-          fileItem.textContent = fileName;
-          fileItem.onclick = () => toggleFileSelection(fileName);
-          uploadedFilesContainer.appendChild(fileItem);
-        });
+        if (tableData.length === 0) {
+          const noFilesMessage = document.createElement("div");
+          noFilesMessage.className = "no-files-message";
+          noFilesMessage.textContent = "There are no available files in the resources/textdata folder";
+          fileBlocksContainer.appendChild(noFilesMessage);
+        } else { 
+          console.log('Creating file blocks for:', tableData);
+          tableData.forEach(({ fileName }) => {
+              const fileItem = document.createElement("div");
+              fileItem.className = `file-item ${selectedFiles.has(fileName) ? 'selected' : ''}`;
+              fileItem.textContent = fileName;
+              fileItem.onclick = () => toggleFileSelection(fileName);
+              fileBlocksContainer.appendChild(fileItem);
+          });
+        }
+
+        uploadedFilesContainer.appendChild(fileBlocksContainer);
 
         // Update export button state
         const exportButton = document.getElementById("export-button");
         exportButton.disabled = selectedFiles.size === 0;
-      }
+          }
 
       function toggleFileSelection(fileName) {
         if (selectedFiles.has(fileName)) {
@@ -191,70 +190,6 @@
         return cell;
       }
 
-      async function saveToSession(data) {
-        try {
-          const response = await fetch('/save-table-data', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ tableData: data })
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to save data');
-          }
-        } catch (error) {
-          console.error('Error saving to session:', error);
-          alert('Failed to save data to session');
-        }
-      }
-
-      async function handleFileUpload(event) {
-        const files = Array.from(event.target.files);
-        const resultsContainer = document.getElementById("results-container");
-        resultsContainer.innerHTML = "";
-        tableData = [];
-        selectedFiles.clear();
-
-        try {
-          // Sort files by numeric value in filename
-          const sortedFiles = files.sort((a, b) => {
-            const getNumber = (filename) => {
-              const match = filename.match(/\d+/);
-              return match ? parseInt(match[0]) : 0;
-            };
-            return getNumber(a.name) - getNumber(b.name);
-          });
-
-          const fileContents = await Promise.all(
-            sortedFiles.map(file => 
-              new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve({
-                  fileName: file.name.replace(".txt", ""),
-                  content: e.target.result
-                });
-                reader.onerror = reject;
-                reader.readAsText(file);
-              })
-            )
-          );
-
-          fileContents.forEach(({ fileName, content }) => {
-            const numericalData = processFileData(content);
-            tableData.push({ fileName, values: numericalData });
-            resultsContainer.appendChild(createTable(fileName, numericalData));
-          });
-
-          await saveToSession(tableData);
-          updateUploadedFiles();
-        } catch (error) {
-          console.error('Error handling files:', error);
-          // alert('Error processing files. Please try again.');
-        }
-      }
-
       async function exportData() {
         try {
           const filteredData = tableData
@@ -289,15 +224,19 @@
         }
       }
 
-      // Initialize data from session
+      // Initialize when page loads
       document.addEventListener('DOMContentLoaded', () => {
-        const resultsContainer = document.getElementById("results-container");
-        if (tableData.length > 0) {
-          tableData.forEach(({ fileName, values }) => {
-            resultsContainer.appendChild(createTable(fileName, values));
-          });
+          console.log('DOM loaded, updating files...');
           updateUploadedFiles();
-        }
+
+          const resultsContainer = document.getElementById("results-container");
+          resultsContainer.innerHTML = "";
+          
+          if (tableData.length > 0) {
+            tableData.forEach(({ fileName, values }) => {
+              resultsContainer.appendChild(createTable(fileName, values));
+            });
+          }
       });
     </script>
   </head>
@@ -305,18 +244,13 @@
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
 
-    <div>
-      <label for="file-upload">Upload .txt files:</label>
-      <input type="file" id="file-upload" accept=".txt" multiple onchange="handleFileUpload(event)" />
-    </div>
-
     <div class="uploaded-files" id="uploaded-files">
-      <h3>Uploaded Files:</h3>
+      <h3>Available Files:</h3>
+      <div class="file-blocks-container"></div>
     </div>
-
 
     <div style="margin-top: 20px;">
-      <button onclick="exportData()">Export</button>
+      <button id="export-button" class="export-button" onclick="exportData()" disabled>Export Selected Files</button>
     </div>
 
     <div id="results-container"></div>
