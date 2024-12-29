@@ -1,6 +1,8 @@
 // routes/export.js
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs').promises;
 
 // Measurement configuration
 const measurementLimits = {
@@ -80,6 +82,45 @@ router.get('/', (req, res) => {
         selected_indices,
         getMeasurements
     });
+});
+
+router.get('/api/weights', async (req, res) => {
+    try {
+        const weightsPath = path.join(__dirname, '..', 'resources', 'weightdata', 'weights.json');
+        
+        // Log the attempted path
+        console.log('Attempting to read weights from:', weightsPath);
+        
+        // Check if file exists
+        try {
+            await fs.access(weightsPath);
+        } catch (err) {
+            console.error('File does not exist:', weightsPath);
+            return res.status(404).json({
+                success: false,
+                error: 'Weights file not found'
+            });
+        }
+
+        // Read the file
+        const weightData = await fs.readFile(weightsPath, 'utf8');
+        console.log('Successfully read weight data:', weightData);
+        
+        const weights = JSON.parse(weightData);
+        
+        // Send back just the weights data first to verify it's working
+        return res.json({
+            success: true,
+            weights: weights
+        });
+
+    } catch (error) {
+        console.error('Detailed error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message || 'Internal server error'
+        });
+    }
 });
 
 router.post('/', (req, res) => {

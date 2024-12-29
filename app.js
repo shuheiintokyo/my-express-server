@@ -40,7 +40,7 @@ app.use(session({
 }));
 
 // Routes
-app.use('/api', exportRouter);
+// app.use('/api', exportRouter);
 app.use('/', indexRouter);
 app.use('/export', exportRouter);
 app.use('/weight-inspection', weightInspectionRouter); 
