@@ -7,6 +7,7 @@ const session = require('express-session');
 const createError = require('http-errors');
 const indexRouter = require('./routes/index');
 const exportRouter = require('./routes/export');
+const weightInspectionRouter = require('./routes/weight-inspection'); 
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
 
@@ -42,6 +43,7 @@ app.use(session({
 app.use('/api', exportRouter);
 app.use('/', indexRouter);
 app.use('/export', exportRouter);
+app.use('/weight-inspection', weightInspectionRouter); 
 
 // Inspection sheet route
 app.get('/inspection-sheet', (req, res) => {

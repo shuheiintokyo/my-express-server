@@ -109,6 +109,27 @@
         color: #666;
         font-style: italic;
       }
+      .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .weight-inspection-button {
+        padding: 12px 24px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .weight-inspection-button:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+      }
     </style>
     
     <script>
@@ -249,8 +270,9 @@
       <div class="file-blocks-container"></div>
     </div>
 
-    <div style="margin-top: 20px;">
+    <div class="button-group">
       <button id="export-button" class="export-button" onclick="exportData()" disabled>Export Selected Files</button>
+      <button class="weight-inspection-button" onclick="window.location.href='/weight-inspection'">Weight Inspection</button>
     </div>
 
     <div id="results-container"></div>
