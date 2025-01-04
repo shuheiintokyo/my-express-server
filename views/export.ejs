@@ -1,817 +1,1037 @@
+//views/export.ejs
+
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
+    <meta charset="UTF-8" />
     <title><%= title %></title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            margin-bottom: 40px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            border: 1px solid black;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 1px;
-            text-align: center;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        .header-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .note {
-            font-style: bold;
-            text-align: end;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        margin-bottom: 40px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        border: 1px solid black;
+        margin-bottom: 20px;
+      }
+      th,
+      td {
+        border: 1px solid black;
+        padding: 1px;
+        text-align: center;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+      .header-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .note {
+        font-style: bold;
+        text-align: end;
+      }
+      .button-container {
+        margin: 20px 0;
+      }
+      button {
+        padding: 8px 16px;
+        margin-right: 10px;
+      }
+      .measurement {
+        color: black;
+      }
+      .out-of-range {
+        color: black;
+      }
+      .inspection-box {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      .inspection-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .toggle-button {
+        width: 60px;
+        height: 30px;
+        cursor: pointer;
+      }
+      .toggle-green {
+        background-color: #90ee90;
+      }
+      .toggle-red {
+        background-color: #ffb6c1;
+      }
+      .number-input {
+        width: 80px;
+      }
+      .hidden {
+        display: none;
+      }
+      .editable {
+        border: 1px solid #ccc;
+        padding: 2px 5px;
+        min-width: 30px;
+        display: inline-block;
+        cursor: pointer;
+      }
+      .editable:hover {
+        background-color: #f0f0f0;
+      }
+      .sample-row {
+        background-color: #f8f8f8;
+      }
+      .company-info {
+        text-align: end;
+      }
+      @media print {
         .button-container {
-            margin: 20px 0;
+          display: none;
         }
-        button {
-            padding: 8px 16px;
-            margin-right: 10px;
-        }
-        .measurement {
-            color: black;
-        }
-        .out-of-range {
-            color: black;
-        }
-        .inspection-box {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        .inspection-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .toggle-button {
-            width: 60px;
-            height: 30px;
-            cursor: pointer;
-        }
-        .toggle-green {
-            background-color: #90EE90;
-        }
-        .toggle-red {
-            background-color: #FFB6C1;
-        }
-        .number-input {
-            width: 80px;
-        }
-        .hidden {
-            display: none;
+        .smaller-text {
+          font-size: 11px;
         }
         .editable {
-            border: 1px solid #ccc;
-            padding: 2px 5px;
-            min-width: 30px;
-            display: inline-block;
-            cursor: pointer;
+          border: none;
         }
-        .editable:hover {
-            background-color: #f0f0f0;
+        .page-break {
+          /* Add page-break class */
+          page-break-before: always;
         }
-        .sample-row {
-            background-color: #f8f8f8;
+        .header-info {
+          display: block; /* Ensure header is block for printing */
         }
-        .company-info{
-                text-align: end;
-            }
-        @media print {
-            .button-container {
-                display: none;
-            }
-            .smaller-text {
-                font-size: 11px;
-            }
-            .editable {
-                border: none;
-            }
-            .page-break { /* Add page-break class */
-                page-break-before: always;
-            }
-            .header-info {
-              display: block; /* Ensure header is block for printing */
-            }
-            .header-info-print{
-                display: flex;
-                justify-content: space-between;
-            }
-            .company-info{
-                text-align: end;
-            }
-            body {
-                margin: 10px; 
-            }
+        .header-info-print {
+          display: flex;
+          justify-content: space-between;
         }
-        
-    </style>
-</head>
+        .company-info {
+          text-align: end;
+        }
+        body {
+          margin: 10px;
+        }
+      }
+      .date-input {
+        padding: 4px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 120px;
+        cursor: pointer;
+      }
 
-<body>
+      .record-button {
+        margin-left: 8px;
+        padding: 4px 12px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .record-button:hover {
+        background-color: #45a049;
+      }
+
+      /* Customize flatpickr appearance */
+      .flatpickr-calendar {
+        font-family: Arial, sans-serif;
+      }
+
+      .flatpickr-day.selected {
+        background: #1976d2;
+        border-color: #1976d2;
+      }
+      .date-container {
+        position: relative;
+        display: inline-block;
+      }
+
+      .date-picker {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1000;
+      }
+
+      #deliveryDateDisplay {
+        cursor: pointer;
+        padding: 2px 5px;
+        border: 1px solid transparent;
+      }
+
+      #deliveryDateDisplay:hover {
+        border-color: #ccc;
+        background-color: #f0f0f0;
+      }
+    </style>
+  </head>
+
+  <body>
     <!-- Inspection Controls -->
     <div id="inspectionControls" class="hidden">
-        <h3>検査コントロール</h3>
-        <div class="inspection-box">
-            <h4>ファイル: <span id="currentFile"></span></h4>
-            <div class="inspection-controls">
-                <button class="toggle-button" data-index="5" onclick="toggleState(this)">-</button>
-                <button class="toggle-button" data-index="6" onclick="toggleState(this)">-</button>
-                <button class="toggle-button" data-index="13" onclick="toggleState(this)">-</button>
-                <button class="toggle-button" data-index="14" onclick="toggleState(this)">-</button>
-                <input type="number" class="number-input" data-index="15" step="0.1" onchange="updateValue(this)">
-                <div class="navigation-buttons">
-                    <button onclick="previousFile()">前へ</button>
-                    <button onclick="nextFile()">次へ</button>
-                    <button onclick="applyValues(true)" class="apply-button">閉じる</button>
-                </div>
-            </div>
+      <h3>検査コントロール</h3>
+      <div class="inspection-box">
+        <h4>ファイル: <span id="currentFile"></span></h4>
+        <div class="inspection-controls">
+          <button
+            class="toggle-button"
+            data-index="5"
+            onclick="toggleState(this)"
+          >
+            -
+          </button>
+          <button
+            class="toggle-button"
+            data-index="6"
+            onclick="toggleState(this)"
+          >
+            -
+          </button>
+          <button
+            class="toggle-button"
+            data-index="13"
+            onclick="toggleState(this)"
+          >
+            -
+          </button>
+          <button
+            class="toggle-button"
+            data-index="14"
+            onclick="toggleState(this)"
+          >
+            -
+          </button>
+          <input
+            type="number"
+            class="number-input"
+            data-index="15"
+            step="0.1"
+            onchange="updateValue(this)"
+          />
+          <div class="navigation-buttons">
+            <button onclick="previousFile()">前へ</button>
+            <button onclick="nextFile()">次へ</button>
+            <button onclick="applyValues(true)" class="apply-button">
+              閉じる
+            </button>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Main Content -->
     <div class="container">
-        <h2>検査シート</h2>
-        <div class="header-info">
-            <div>
-                <strong>品名:</strong> 水平ノズル
-                <strong>室温:</strong> <span class="editable" contenteditable="true" id="temperature">22.0</span>°
-                <strong>湿度:</strong> <span class="editable" contenteditable="true" id="humidity">30</span>%
-                <strong>仕様書番号:</strong> KDMP-0434
-                <strong>担当者:</strong> <span class="editable" contenteditable="true" id="inspector">苗村</span>
-            </div>
+      <h2>検査シート</h2>
+      <div class="header-info">
+        <div>
+          <strong>品名:</strong> 水平ノズル
+          <!-- <strong>室温:</strong> <span class="editable" contenteditable="true" id="temperature">22.0</span>°
+                <strong>湿度:</strong> <span class="editable" contenteditable="true" id="humidity">30</span>% -->
+          <strong>仕様書番号:</strong> KDMP-0434 <strong>担当者:</strong>
+          <span class="editable" contenteditable="true" id="inspector"
+            >苗村</span
+          >
         </div>
-        <div class="header-info">
-            <div>
-                <strong>図番:</strong> P2MM302000
-                <strong>数量:</strong> <span id="fileCount"><%= data ? data.length : 0 %></span>個
-                <strong>検査方法:</strong> 全数検査
-                <strong>検査日:</strong> <%= new Date().toLocaleDateString() %>
-            </div>
-            <div class="company-info">㈱平田商店</div>   
+      </div>
+      <div class="header-info">
+        <div>
+          <strong>図番:</strong> P2MM302000 <strong>数量:</strong>
+          <span id="fileCount"><%= data ? data.length : 0 %></span>個
+          <strong>納期:</strong>
+          <input
+            type="text"
+            id="deliveryDatePicker"
+            class="date-input"
+            placeholder="日付を選択"
+          />
+          <strong>検査方法:</strong> 全数検査 <strong>検査日:</strong> <%= new
+          Date().toLocaleDateString() %>
         </div>
-        <div class="header-info">
-            <!-- Existing header content -->
-            <div style="margin-left: auto;">
-                <button id="quickApproveButton" 
-                        style="width: 48px; 
-                               height: 48px; 
-                               border-radius: 50%; 
-                               background-color: white; 
-                               color: white; 
-                               border: none; 
-                               font-weight: bold; 
-                               cursor: pointer;
-                               box-shadow: 0 2px 4px white;"
-                        title="一括承認">?????</button>
-            </div>
+        <div class="company-info">㈱平田商店</div>
+      </div>
+      <div class="header-info">
+        <!-- Existing header content -->
+        <div style="margin-left: auto">
+          <button
+            id="quickApproveButton"
+            style="
+              width: 48px;
+              height: 48px;
+              border-radius: 50%;
+              background-color: white;
+              color: white;
+              border: none;
+              font-weight: bold;
+              cursor: pointer;
+              box-shadow: 0 2px 4px white;
+            "
+            title="一括承認"
+          >
+            ?????
+          </button>
         </div>
-        
-        
-        <div class="note">
-            <div>単位（ｍｍ）</div>
-        </div>
+      </div>
 
-        <table class="smaller-text">
-            <thead>
-                <tr>
-                    <th>項目</th>
-                    <th>①</th>
-                    <th>②</th>
-                    <th>③</th>
-                    <th>④</th>
-                    <th>⑤</th>
-                    <th>⑥</th>
-                    <th>⑥</th>
-                    <th>⑥</th>
-                    <th>⑦</th>
-                    <th>⑧</th>
-                    <th>⑨</th>
-                    <th>⑩</th>
-                    <th>ⓐ〜ⓔ</th>
-                    <th>外観</th>
-                    <th>質量</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>図面寸法</td>
-                    <td>8.2</td>
-                    <td>37.5</td>
-                    <td>15.9</td>
-                    <td>24.1</td>
-                    <td>Φ11.2</td>
-                    <td>Φ3.2全貫通</td>
-                    <td>Φ8.0</td>
-                    <td>深さ5.0</td>
-                    <td>P.C.D 30</td>
-                    <td>Φ155.4</td>
-                    <td>83.1</td>
-                    <td>Φ122.3</td>
-                    <td>嵌め合い</td>
-                    <td>目視点検</td>
-                    <td>（参考値）</td>
-                </tr>
-                <tr>
-                    <td>寸法公差</td>
-                    <td>±0.2</td>
-                    <td>±0.3</td>
-                    <td>±0.2</td>
-                    <td>±0.2</td>
-                    <td>＋0.2/0</td>
-                    <td>±0.1</td>
-                    <td>±0.2</td>
-                    <td>±0.1</td>
-                    <td>±0.2</td>
-                    <td>±0.5</td>
-                    <td>±0.3</td>
-                    <td>±0.5</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>上限値</td>
-                    <td>8.4</td>
-                    <td>37.8</td>
-                    <td>16.1</td>
-                    <td>24.3</td>
-                    <td>11.4</td>
-                    <td>3.3</td>
-                    <td>8.2</td>
-                    <td>5.1</td>
-                    <td>30.2</td>
-                    <td>155.9</td>
-                    <td>83.4</td>
-                    <td>122.8</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>下限値</td>
-                    <td>8.0</td>
-                    <td>37.2</td>
-                    <td>15.7</td>
-                    <td>23.9</td>
-                    <td>11.2</td>
-                    <td>3.1</td>
-                    <td>7.8</td>
-                    <td>4.9</td>
-                    <td>29.8</td>
-                    <td>154.9</td>
-                    <td>82.8</td>
-                    <td>121.8</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>測定器具</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>ピンゲージ</td>
-                    <td>ピンゲージ</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>三次元測定器</td>
-                    <td>治具</td>
-                    <td>目視</td>
-                    <td>秤</td>
-                </tr>
-                <tr>
-                    <td>記載事項</td>
-                    <td>測定値</td>
-                    <td>測定値</td>
-                    <td>測定値</td>
-                    <td>合否</td>
-                    <td>合否</td>
-                    <td>合否</td>
-                    <td>測定値</td>
-                    <td>測定値</td>
-                    <td>測定値</td>
-                    <td>測定値</td>
-                    <td>測定値</td>
-                    <td>測定値</td>
-                    <td>合否</td>
-                    <td>合否</td>
-                    <td>測定値</td>
-                </tr>
-                <% if (data && Array.isArray(data)) { %>
-                    <% data.forEach((item, dataIndex) => { %>
-                        <tr>
-                            <td><%= item.fileName %></td>
-                            <% 
-                            const measurements = getMeasurements(item.filteredValues, selected_indices);
-                            const inspectionData = item.inspectionValues || {};
-                            %>
-                            <% for (let i = 0; i < 15; i++) { %> <!-- Loop only up to index 14 -->
-                                <td>
-                                    <% if (i >= 0 && i <= 3) { %>
-                                        <%- measurements[i] || '-' %>
-                                    <% } else if (i === 4 || i === 5) { %>
-                                        - <!-- Explicitly set 4th and 5th indices to "-" -->
-                                    <% } else if (i === 6) { %>
-                                        <%- measurements[6] || '-' %> <!-- Include the 6th index -->
-                                    <% } else if (i >= 7 && i <= 11) { %>
-                                        <%- measurements[i] || '-' %> <!-- Logic for 7th to 11th indices -->
-                                    <% } else if (i >= 12 && i <= 14) { %>
-                                        - <!-- Explicitly set 12th, 13th, and 14th indices to "-" -->
-                                    <% } %>
-                                </td>
-                            <% } %>
-                        </tr>
-                    <% }); %>
-                <% } %>
-            </tbody>
-        </table>
+      <div class="note">
+        <div>単位（ｍｍ）</div>
+      </div>
 
-        <div class="note">
-            ＊着脱容易なシールに識別番号を記載し製品裏の底面に貼り付ける。
-        </div>
+      <table class="smaller-text">
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>①</th>
+            <th>②</th>
+            <th>③</th>
+            <th>④</th>
+            <th>⑤</th>
+            <th>⑥</th>
+            <th>⑥</th>
+            <th>⑥</th>
+            <th>⑦</th>
+            <th>⑧</th>
+            <th>⑨</th>
+            <th>⑩</th>
+            <th>ⓐ〜ⓔ</th>
+            <th>外観</th>
+            <th>質量</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>図面寸法</td>
+            <td>8.2</td>
+            <td>37.5</td>
+            <td>15.9</td>
+            <td>24.1</td>
+            <td>Φ11.2</td>
+            <td>Φ3.2全貫通</td>
+            <td>Φ8.0</td>
+            <td>深さ5.0</td>
+            <td>P.C.D 30</td>
+            <td>Φ155.4</td>
+            <td>83.1</td>
+            <td>Φ122.3</td>
+            <td>嵌め合い</td>
+            <td>目視点検</td>
+            <td>（参考値）</td>
+          </tr>
+          <tr>
+            <td>寸法公差</td>
+            <td>±0.2</td>
+            <td>±0.3</td>
+            <td>±0.2</td>
+            <td>±0.2</td>
+            <td>＋0.2/0</td>
+            <td>±0.1</td>
+            <td>±0.2</td>
+            <td>±0.1</td>
+            <td>±0.2</td>
+            <td>±0.5</td>
+            <td>±0.3</td>
+            <td>±0.5</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>上限値</td>
+            <td>8.4</td>
+            <td>37.8</td>
+            <td>16.1</td>
+            <td>24.3</td>
+            <td>11.4</td>
+            <td>3.3</td>
+            <td>8.2</td>
+            <td>5.1</td>
+            <td>30.2</td>
+            <td>155.9</td>
+            <td>83.4</td>
+            <td>122.8</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>下限値</td>
+            <td>8.0</td>
+            <td>37.2</td>
+            <td>15.7</td>
+            <td>23.9</td>
+            <td>11.2</td>
+            <td>3.1</td>
+            <td>7.8</td>
+            <td>4.9</td>
+            <td>29.8</td>
+            <td>154.9</td>
+            <td>82.8</td>
+            <td>121.8</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>測定器具</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>ピンゲージ</td>
+            <td>ピンゲージ</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>三次元測定器</td>
+            <td>治具</td>
+            <td>目視</td>
+            <td>秤</td>
+          </tr>
+          <tr>
+            <td>記載事項</td>
+            <td>測定値</td>
+            <td>測定値</td>
+            <td>測定値</td>
+            <td>合否</td>
+            <td>合否</td>
+            <td>合否</td>
+            <td>測定値</td>
+            <td>測定値</td>
+            <td>測定値</td>
+            <td>測定値</td>
+            <td>測定値</td>
+            <td>測定値</td>
+            <td>合否</td>
+            <td>合否</td>
+            <td>測定値</td>
+          </tr>
+          <% if (data && Array.isArray(data)) { %> <% data.forEach((item,
+          dataIndex) => { %>
+          <tr>
+            <td><%= item.fileName %></td>
+            <% const measurements = getMeasurements(item.filteredValues,
+            selected_indices); const inspectionData = item.inspectionValues ||
+            {}; %> <% for (let i = 0; i < 15; i++) { %>
+            <!-- Loop only up to index 14 -->
+            <td>
+              <% if (i >= 0 && i <= 3) { %> <%- measurements[i] || '-' %> <% }
+              else if (i === 4 || i === 5) { %> -
+              <!-- Explicitly set 4th and 5th indices to "-" -->
+              <% } else if (i === 6) { %> <%- measurements[6] || '-' %>
+              <!-- Include the 6th index -->
+              <% } else if (i >= 7 && i <= 11) { %> <%- measurements[i] || '-'
+              %>
+              <!-- Logic for 7th to 11th indices -->
+              <% } else if (i >= 12 && i <= 14) { %> -
+              <!-- Explicitly set 12th, 13th, and 14th indices to "-" -->
+              <% } %>
+            </td>
+            <% } %>
+          </tr>
+          <% }); %> <% } %>
+        </tbody>
+      </table>
+
+      <div class="note">
+        ＊着脱容易なシールに識別番号を記載し製品裏の底面に貼り付ける。
+      </div>
     </div>
 
     <div class="button-container">
-        <button onclick="window.location.href='/'">アップロードに戻る</button>
-        <button onclick="window.print()">印刷</button>
-        <button id="inspectorButton" onclick="toggleInspector()">検査</button>
-        <button onclick="importWeights()">重量データ インポート</button>
+      <button onclick="window.location.href='/'">アップロードに戻る</button>
+      <button onclick="window.print()">印刷</button>
+      <button id="inspectorButton" onclick="toggleInspector()">検査</button>
+      <button id="recordButton" class="record-button">記録</button>
+      <button onclick="importWeights()">重量データ インポート</button>
     </div>
 
     <script>
-        // Initialize measurement limits
-        const measurementLimits = {
-            0: { min: 8.0, max: 8.4 },
-            1: { min: 37.2, max: 37.8 },
-            2: { min: 15.7, max: 16.1 },
-            3: { min: 23.9, max: 24.3 },
-            6: { min: 3.1, max: 3.3 },
-            7: { min: 7.8, max: 8.2 },
-            8: { min: 4.9, max: 5.1 },
-            9: { min: 29.8, max: 30.2 },
-            10: { min: 154.9, max: 155.9 },
-            11: { min: 82.8, max: 83.4 }
-        };
+                    // Initialize measurement limits
+                    const measurementLimits = {
+                        0: { min: 8.0, max: 8.4 },
+                        1: { min: 37.2, max: 37.8 },
+                        2: { min: 15.7, max: 16.1 },
+                        3: { min: 23.9, max: 24.3 },
+                        6: { min: 3.1, max: 3.3 },
+                        7: { min: 7.8, max: 8.2 },
+                        8: { min: 4.9, max: 5.1 },
+                        9: { min: 29.8, max: 30.2 },
+                        10: { min: 154.9, max: 155.9 },
+                        11: { min: 82.8, max: 83.4 }
+                    };
 
-        // Initialize measurement mapping
-        const measurementMap = {
-            103: 0,  // ①
-            99: 1,   // ②
-            177: 2,  // ③
-            158: 3,  // ④
-            114: 6,  // ⑥
-            182: 7,  // ⑥
-            193: 8,  // ⑥
-            79: 9,   // ⑦
-            148: 10, // ⑧
-            174: 11  // ⑨
-        };
+                    // Initialize measurement mapping
+                    const measurementMap = {
+                        103: 0,  // ①
+                        99: 1,   // ②
+                        177: 2,  // ③
+                        158: 3,  // ④
+                        114: 6,  // ⑥
+                        182: 7,  // ⑥
+                        193: 8,  // ⑥
+                        79: 9,   // ⑦
+                        148: 10, // ⑧
+                        174: 11  // ⑨
+                    };
 
-        let currentFileIndex = 0;
-        let inspectionData = <%- JSON.stringify(data || []) %>;
+                    let currentFileIndex = 0;
+                    let inspectionData = <%- JSON.stringify(data || []) %>;
 
-        function applyValues() {
-            const buttons = document.querySelectorAll('.toggle-button');
-            const input = document.querySelector('.number-input');
-            const values = [];
-            
-            buttons.forEach(button => {
-                values.push(button.textContent);
-            });
-            values.push(input.value);
-    
-            fetch('/api/inspection/apply', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    fileIndex: currentFileIndex,
-                    values: values
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update the table row
-                    const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
-                    if (row) {
-                        values.forEach((value, index) => {
-                            const mappedIndex = [5, 6, 13, 14, 15][index];
-                            if (mappedIndex !== undefined) {
-                                const cell = row.children[mappedIndex];
-                                if (cell) {
-                                    cell.textContent = value || '-';
+                    function applyValues() {
+                        const buttons = document.querySelectorAll('.toggle-button');
+                        const input = document.querySelector('.number-input');
+                        const values = [];
+
+                        buttons.forEach(button => {
+                            values.push(button.textContent);
+                        });
+                        values.push(input.value);
+
+                        fetch('/api/inspection/apply', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                fileIndex: currentFileIndex,
+                                values: values
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update the table row
+                                const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
+                                if (row) {
+                                    values.forEach((value, index) => {
+                                        const mappedIndex = [5, 6, 13, 14, 15][index];
+                                        if (mappedIndex !== undefined) {
+                                            const cell = row.children[mappedIndex];
+                                            if (cell) {
+                                                cell.textContent = value || '-';
+                                            }
+                                        }
+                                    });
                                 }
+                                // Show success message
+                                alert('値を反映しました');
                             }
+                        })
+                        .catch(error => {
+                            console.error('Error applying inspection values:', error);
+                            alert('エラーが発生しました');
                         });
                     }
-                    // Show success message
-                    alert('値を反映しました');
-                }
-            })
-            .catch(error => {
-                console.error('Error applying inspection values:', error);
-                alert('エラーが発生しました');
-            });
-        }
 
-        const style = document.createElement('style');
-        style.textContent = `
-        .apply-button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .apply-button:hover {
-            background-color: #45a049;
-        }
-        .navigation-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .hidden {
-        display: none !important;
-        }    
-        `;
-        document.head.appendChild(style);
+                    const style = document.createElement('style');
+                    style.textContent = `
+                    .apply-button {
+                        background-color: #4CAF50;
+                        color: white;
+                        padding: 8px 16px;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    }
+                    .apply-button:hover {
+                        background-color: #45a049;
+                    }
+                    .navigation-buttons {
+                        display: flex;
+                        gap: 10px;
+                        margin-top: 10px;
+                    }
+                    .hidden {
+                    display: none !important;
+                    }
+                    `;
+                    document.head.appendChild(style);
 
-        function getMeasurements(filteredValues, selected_indices) {
-            if (!Array.isArray(filteredValues) || !Array.isArray(selected_indices)) {
-                console.error('Invalid input: filteredValues and selected_indices must be arrays');
-                return Array(16).fill('-');
-            }
-        
-            const measurements = Array(16).fill('-');
-            
-            try {
-                filteredValues.forEach((value, index) => {
-                    if (index >= selected_indices.length) return;
-                    const columnIndex = selected_indices[index];
-
-                    if (tableIndex !== undefined && value !== '' && value != null) {
-                        const numberValue = Number(value);
-                        if (isNaN(numberValue)) {
-                            console.warn(`Invalid number value at index ${index}: ${value}`);
-                            return;
+                    function getMeasurements(filteredValues, selected_indices) {
+                        if (!Array.isArray(filteredValues) || !Array.isArray(selected_indices)) {
+                            console.error('Invalid input: filteredValues and selected_indices must be arrays');
+                            return Array(16).fill('-');
                         }
 
-                        const numValue = Math.abs(numberValue).toFixed(2);
-                        const limits = measurementLimits[tableIndex];
-                        const isOutOfRange = limits && (numValue < limits.min || numValue > limits.max);
-                        
-                        measurements[tableIndex] = isOutOfRange 
-                            ? `<span class="out-of-range">${numValue}</span>`
-                            : `<span class="measurement">${numValue}</span>`;
+                        const measurements = Array(16).fill('-');
+
+                        try {
+                            filteredValues.forEach((value, index) => {
+                                if (index >= selected_indices.length) return;
+                                const columnIndex = selected_indices[index];
+
+                                if (tableIndex !== undefined && value !== '' && value != null) {
+                                    const numberValue = Number(value);
+                                    if (isNaN(numberValue)) {
+                                        console.warn(`Invalid number value at index ${index}: ${value}`);
+                                        return;
+                                    }
+
+                                    const numValue = Math.abs(numberValue).toFixed(2);
+                                    const limits = measurementLimits[tableIndex];
+                                    const isOutOfRange = limits && (numValue < limits.min || numValue > limits.max);
+
+                                    measurements[tableIndex] = isOutOfRange
+                                        ? `<span class="out-of-range">${numValue}</span>`
+                                        : `<span class="measurement">${numValue}</span>`;
+                                }
+                            });
+                        } catch (error) {
+                            console.error('Error in getMeasurements:', error);
+                            return Array(16).fill('-');
+                        }
+
+                        return measurements;
+                    }
+
+                    function toggleInspector() {
+                        const controls = document.getElementById('inspectionControls');
+                        controls.classList.toggle('hidden');
+                        updateCurrentFile();
+                    }
+
+                    function updateCurrentFile() {
+                        const fileElement = document.getElementById('currentFile');
+                        if (inspectionData && inspectionData.length > 0) {
+                            fileElement.textContent = inspectionData[currentFileIndex].fileName;
+                        }
+                    }
+
+                    function toggleState(button) {
+                        const states = ['', '合', '否'];
+                        const colors = ['', 'toggle-green', 'toggle-red'];
+
+                        let currentStateIndex = states.indexOf(button.textContent);
+                        currentStateIndex = (currentStateIndex + 1) % states.length;
+
+                        button.textContent = states[currentStateIndex];
+                        button.className = 'toggle-button ' + colors[currentStateIndex];
+
+                        updateInspectionValue(button.dataset.index, states[currentStateIndex]);
+                    }
+
+                    function updateValue(input) {
+                        const value = parseFloat(input.value);
+                        if (!isNaN(value)) {
+                            updateInspectionValue(input.dataset.index, value.toFixed(1));
+                        }
+                    }
+
+                    function updateInspectionValue(index, value) {
+                        fetch('/api/inspection/update', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                fileIndex: currentFileIndex,
+                                valueIndex: parseInt(index),
+                                value: value
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
+                                if (row) {
+                                    const cell = row.children[parseInt(index)];
+                                    if (cell) {
+                                        cell.textContent = value;
+                                    }
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error updating inspection value:', error));
+                    }
+
+                    // Add event listeners for editable fields
+                    document.querySelectorAll('.editable').forEach(element => {
+                        element.addEventListener('blur', function() {
+                            const id = this.id;
+                            const value = this.textContent;
+
+                            // Save to backend if needed
+                            fetch('/api/header/update', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    field: id,
+                                    value: value
+                                })
+                            })
+                            .then(response => response.json())
+                            .catch(error => console.error('Error updating header value:', error));
+                        });
+
+                        element.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                this.blur();
+                            }
+                        });
+                    });
+
+
+                    function updateInspectionControls() {
+                        const currentData = inspectionData[currentFileIndex];
+                        const buttons = document.querySelectorAll('.toggle-button');
+                        const input = document.querySelector('.number-input');
+
+                        // Reset all buttons and input first
+                        buttons.forEach(button => {
+                            button.textContent = '-';
+                            button.className = 'toggle-button';
+                        });
+                        input.value = '';
+
+                        // Update with current data if available
+                        if (currentData && currentData.inspectionValues) {
+                            buttons.forEach((button, index) => {
+                                const value = currentData.inspectionValues[index];
+                                if (value === '合' || value === '否') {
+                                    button.textContent = value;
+                                    button.className = `toggle-button ${value === '合' ? 'toggle-green' : 'toggle-red'}`;
+                                }
+                            });
+
+                            // Update number input if value exists
+                            if (currentData.inspectionValues[4] !== undefined) {
+                                input.value = currentData.inspectionValues[4];
+                            }
+                        }
+                    }
+
+                    function nextFile() {
+                        if (currentFileIndex < inspectionData.length - 1) {
+                            applyValues(false);  // Don't close when navigating
+                            currentFileIndex++;
+                            updateCurrentFile();
+                            updateInspectionControls();
+                        }
+                    }
+
+                    function previousFile() {
+                        if (currentFileIndex > 0) {
+                            applyValues(false);  // Don't close when navigating
+                            currentFileIndex--;
+                            updateCurrentFile();
+                            updateInspectionControls();
+                        }
+                    }
+
+                    function applyValues(shouldClose = false) {  // Add parameter to control closing behavior
+                        const buttons = document.querySelectorAll('.toggle-button');
+                        const input = document.querySelector('.number-input');
+                        const values = [];
+                        const controls = document.getElementById('inspectionControls');
+
+                        buttons.forEach(button => {
+                            values.push(button.textContent);
+                        });
+                        values.push(input.value);
+
+                        // Store values in inspectionData
+                        if (!inspectionData[currentFileIndex].inspectionValues) {
+                            inspectionData[currentFileIndex].inspectionValues = [];
+                        }
+                        values.forEach((value, index) => {
+                            inspectionData[currentFileIndex].inspectionValues[index] = value;
+                        });
+
+                        // Update the table row immediately
+                        const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
+                        if (row) {
+                            values.forEach((value, index) => {
+                                const mappedIndex = [5, 6, 13, 14, 15][index];
+                                if (mappedIndex !== undefined) {
+                                    const cell = row.children[mappedIndex];
+                                    if (cell) {
+                                        cell.textContent = value || '-';
+                                    }
+                                }
+                            });
+                        }
+
+                        // Only hide controls if shouldClose is true
+                        if (shouldClose) {
+                            controls.classList.add('hidden');
+                        }
+
+                        // Try to save to server in the background
+                        fetch('/api/inspection/apply', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                fileIndex: currentFileIndex,
+                                values: values
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Data saved successfully');
+                        })
+                        .catch(error => {
+                            console.warn('Warning: Could not save to server:', error);
+                        });
+                    }
+
+                    // Also let's add a function to check if the controls are properly toggling
+                    function toggleInspector() {
+                        const controls = document.getElementById('inspectionControls');
+                        console.log('Toggle - Before:', controls.classList.contains('hidden')); // Debug log
+                        controls.classList.toggle('hidden');
+                        console.log('Toggle - After:', controls.classList.contains('hidden')); // Debug log
+                    }
+                    // Add keyboard navigation
+                    document.addEventListener('keydown', function(e) {
+                        if (!document.getElementById('inspectionControls').classList.contains('hidden')) {
+                            if (e.key === 'ArrowRight' || e.key === 'n') {
+                                nextFile();
+                            } else if (e.key === 'ArrowLeft' || e.key === 'p') {
+                                previousFile();
+                            }
+                        }
+                    });
+
+                    // Initialize inspector if data is available
+                    if (inspectionData && inspectionData.length > 0) {
+                        document.getElementById('inspectorButton').disabled = false;
+
+                        // Add navigation buttons
+                        const controls = document.querySelector('.inspection-controls');
+
+                        let navButtons = controls.querySelector('.navigation-buttons');
+
+                    if (!navButtons) { // Check if navigation buttons already exist
+                        navButtons = document.createElement('div');
+                        navButtons.classList.add('navigation-buttons'); // Add a class for identification
+                        navButtons.innerHTML = `
+                            <button onclick="previousFile()">前へ</button>
+                            <button onclick="nextFile()">次へ</button>
+                        `;
+                        controls.appendChild(navButtons);
+                    } }else {
+                        document.getElementById('inspectorButton').disabled = true;
+                    }
+
+                    // Add this to your existing script section
+                function applyMassApproval() {
+                // Get all rows except header rows (start from index 7)
+                const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
+
+                // For each row, update the cells at indices 5, 6, 13, and 14
+                rows.forEach((row, rowIndex) => {
+                    const targetIndices = [5, 6, 13, 14];
+                    targetIndices.forEach(colIndex => {
+                        const cell = row.children[colIndex];
+                        if (cell) {
+                            cell.textContent = '合';
+                        }
+                    });
+
+                    // Update the inspection data in memory
+                    if (inspectionData && inspectionData[rowIndex]) {
+                        if (!inspectionData[rowIndex].inspectionValues) {
+                            inspectionData[rowIndex].inspectionValues = [];
+                        }
+                        [5, 6, 13, 14].forEach((index, i) => {
+                            inspectionData[rowIndex].inspectionValues[i] = '合';
+                        });
                     }
                 });
-            } catch (error) {
-                console.error('Error in getMeasurements:', error);
-                return Array(16).fill('-');
-            }
-            
-            return measurements;
-        }
 
-        function toggleInspector() {
-            const controls = document.getElementById('inspectionControls');
-            controls.classList.toggle('hidden');
-            updateCurrentFile();
-        }
-
-        function updateCurrentFile() {
-            const fileElement = document.getElementById('currentFile');
-            if (inspectionData && inspectionData.length > 0) {
-                fileElement.textContent = inspectionData[currentFileIndex].fileName;
-            }
-        }
-
-        function toggleState(button) {
-            const states = ['', '合', '否'];
-            const colors = ['', 'toggle-green', 'toggle-red'];
-            
-            let currentStateIndex = states.indexOf(button.textContent);
-            currentStateIndex = (currentStateIndex + 1) % states.length;
-            
-            button.textContent = states[currentStateIndex];
-            button.className = 'toggle-button ' + colors[currentStateIndex];
-            
-            updateInspectionValue(button.dataset.index, states[currentStateIndex]);
-        }
-
-        function updateValue(input) {
-            const value = parseFloat(input.value);
-            if (!isNaN(value)) {
-                updateInspectionValue(input.dataset.index, value.toFixed(1));
-            }
-        }
-
-        function updateInspectionValue(index, value) {
-            fetch('/api/inspection/update', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    fileIndex: currentFileIndex,
-                    valueIndex: parseInt(index),
-                    value: value
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
-                    if (row) {
-                        const cell = row.children[parseInt(index)];
-                        if (cell) {
-                            cell.textContent = value;
-                        }
-                    }
-                }
-            })
-            .catch(error => console.error('Error updating inspection value:', error));
-        }
-
-        // Add event listeners for editable fields
-        document.querySelectorAll('.editable').forEach(element => {
-            element.addEventListener('blur', function() {
-                const id = this.id;
-                const value = this.textContent;
-                
-                // Save to backend if needed
-                fetch('/api/header/update', {
+                // Save to server
+                fetch('/api/inspection/mass-approve', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        field: id,
-                        value: value
+                        indices: [5, 6, 13, 14],
+                        value: '合'
                     })
                 })
-                .then(response => response.json())
-                .catch(error => console.error('Error updating header value:', error));
-            });
-
-            element.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.blur();
+                .catch(error => console.warn('Warning: Could not save mass approval to server:', error));
                 }
-            });
-        });
 
+                // Add event listener for the quick approve button
+                document.getElementById('quickApproveButton').addEventListener('click', applyMassApproval);
 
-
-        function updateInspectionControls() {
-            const currentData = inspectionData[currentFileIndex];
-            const buttons = document.querySelectorAll('.toggle-button');
-            const input = document.querySelector('.number-input');
-            
-            // Reset all buttons and input first
-            buttons.forEach(button => {
-                button.textContent = '-';
-                button.className = 'toggle-button';
-            });
-            input.value = '';
-            
-            // Update with current data if available
-            if (currentData && currentData.inspectionValues) {
-                buttons.forEach((button, index) => {
-                    const value = currentData.inspectionValues[index];
-                    if (value === '合' || value === '否') {
-                        button.textContent = value;
-                        button.className = `toggle-button ${value === '合' ? 'toggle-green' : 'toggle-red'}`;
-                    }
-                });
-                
-                // Update number input if value exists
-                if (currentData.inspectionValues[4] !== undefined) {
-                    input.value = currentData.inspectionValues[4];
-                }
-            }
-        }
-
-        function nextFile() {
-            if (currentFileIndex < inspectionData.length - 1) {
-                applyValues(false);  // Don't close when navigating
-                currentFileIndex++;
-                updateCurrentFile();
-                updateInspectionControls();
-            }
-        }
-        
-        function previousFile() {
-            if (currentFileIndex > 0) {
-                applyValues(false);  // Don't close when navigating
-                currentFileIndex--;
-                updateCurrentFile();
-                updateInspectionControls();
-            }
-        }
-
-        function applyValues(shouldClose = false) {  // Add parameter to control closing behavior
-            const buttons = document.querySelectorAll('.toggle-button');
-            const input = document.querySelector('.number-input');
-            const values = [];
-            const controls = document.getElementById('inspectionControls');
-            
-            buttons.forEach(button => {
-                values.push(button.textContent);
-            });
-            values.push(input.value);
-        
-            // Store values in inspectionData
-            if (!inspectionData[currentFileIndex].inspectionValues) {
-                inspectionData[currentFileIndex].inspectionValues = [];
-            }
-            values.forEach((value, index) => {
-                inspectionData[currentFileIndex].inspectionValues[index] = value;
-            });
-        
-            // Update the table row immediately
-            const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
-            if (row) {
-                values.forEach((value, index) => {
-                    const mappedIndex = [5, 6, 13, 14, 15][index];
-                    if (mappedIndex !== undefined) {
-                        const cell = row.children[mappedIndex];
-                        if (cell) {
-                            cell.textContent = value || '-';
-                        }
-                    }
-                });
-            }
-        
-            // Only hide controls if shouldClose is true
-            if (shouldClose) {
-                controls.classList.add('hidden');
-            }
-        
-            // Try to save to server in the background
-            fetch('/api/inspection/apply', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    fileIndex: currentFileIndex,
-                    values: values
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Data saved successfully');
-            })
-            .catch(error => {
-                console.warn('Warning: Could not save to server:', error);
-            });
-        }
-        
-        // Also let's add a function to check if the controls are properly toggling
-        function toggleInspector() {
-            const controls = document.getElementById('inspectionControls');
-            console.log('Toggle - Before:', controls.classList.contains('hidden')); // Debug log
-            controls.classList.toggle('hidden');
-            console.log('Toggle - After:', controls.classList.contains('hidden')); // Debug log
-        }
-        // Add keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            if (!document.getElementById('inspectionControls').classList.contains('hidden')) {
-                if (e.key === 'ArrowRight' || e.key === 'n') {
-                    nextFile();
-                } else if (e.key === 'ArrowLeft' || e.key === 'p') {
-                    previousFile();
-                }
-            }
-        });
-
-        // Initialize inspector if data is available
-        if (inspectionData && inspectionData.length > 0) {
-            document.getElementById('inspectorButton').disabled = false;
-
-            // Add navigation buttons
-            const controls = document.querySelector('.inspection-controls');
-            
-            let navButtons = controls.querySelector('.navigation-buttons');
-
-        if (!navButtons) { // Check if navigation buttons already exist
-            navButtons = document.createElement('div');
-            navButtons.classList.add('navigation-buttons'); // Add a class for identification
-            navButtons.innerHTML = `
-                <button onclick="previousFile()">前へ</button>
-                <button onclick="nextFile()">次へ</button>  
-            `;
-            controls.appendChild(navButtons);
-        } }else {
-            document.getElementById('inspectorButton').disabled = true;
-        }
-
-        // Add this to your existing script section
-    function applyMassApproval() {
-    // Get all rows except header rows (start from index 7)
-    const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
-    
-    // For each row, update the cells at indices 5, 6, 13, and 14
-    rows.forEach((row, rowIndex) => {
-        const targetIndices = [5, 6, 13, 14];
-        targetIndices.forEach(colIndex => {
-            const cell = row.children[colIndex];
-            if (cell) {
-                cell.textContent = '合';
-            }
-        });
-
-        // Update the inspection data in memory
-        if (inspectionData && inspectionData[rowIndex]) {
-            if (!inspectionData[rowIndex].inspectionValues) {
-                inspectionData[rowIndex].inspectionValues = [];
-            }
-            [5, 6, 13, 14].forEach((index, i) => {
-                inspectionData[rowIndex].inspectionValues[i] = '合';
-            });
-        }
-    });
-
-    // Save to server
-    fetch('/api/inspection/mass-approve', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            indices: [5, 6, 13, 14],
-            value: '合'
-        })
-    })
-    .catch(error => console.warn('Warning: Could not save mass approval to server:', error));
-    }
-
-    // Add event listener for the quick approve button
-    document.getElementById('quickApproveButton').addEventListener('click', applyMassApproval);
-
-    function importWeights() {
-        fetch('/export/api/weights')  // Changed from '/api/weights' to '/export/api/weights'
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Update the table rows
-                    const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
-                    rows.forEach(row => {
-                        const fileNameCell = row.cells[0];
-                        const weightCell = row.cells[15]; // Last column
-                        if (weightCell) {
-                            const weight = data.weights?.find(w => w.fileName === fileNameCell.textContent.trim())?.weight;
-                            if (weight) {
-                                weightCell.textContent = weight.toString();
+                function importWeights() {
+                    fetch('/export/api/weights')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
                             }
-                        }
-                    });
-                    alert('重量データを正常にインポートしました。');
-                } else {
-                    throw new Error(data.error || 'Failed to import weights');
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                // Update the table rows
+                                const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
+                                rows.forEach(row => {
+                                    const fileNameCell = row.cells[0];
+                                    const weightCell = row.cells[15]; // Last column
+                                    if (weightCell) {
+                                        const weight = data.weights?.find(w => w.fileName === fileNameCell.textContent.trim())?.weight;
+                                        if (weight) {
+                                            weightCell.textContent = weight.toString();
+                                        }
+                                    }
+                                });
+                                alert('重量データを正常にインポートしました。');
+                            } else {
+                                throw new Error(data.error || 'Failed to import weights');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error importing weights:', error);
+                            alert('重量データのインポート中にエラーが発生しました。');
+                        });
                 }
-            })
-            .catch(error => {
-                console.error('Error importing weights:', error);
-                alert('重量データのインポート中にエラーが発生しました。');
-            });
-    }
+                    // Add this to your existing script section
+                document.addEventListener('DOMContentLoaded', function() {
+          const recordButton = document.getElementById('recordButton');
+          const datePicker = flatpickr("#deliveryDatePicker", {
+              locale: "ja",
+              dateFormat: "Y/m/d",
+              defaultDate: new Date(),
+              theme: "material_blue",
+              allowInput: true,
+              onChange: (selectedDates, dateStr) => saveDateToServer(dateStr)
+          });
+
+          async function saveDateToServer(dateStr) {
+              try {
+                  const response = await fetch('/export/api/header/update', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                          field: 'deliveryDate',
+                          value: dateStr
+                      })
+                  });
+                  const data = await response.json();
+                  if (!data.success) throw new Error('Failed to save date');
+              } catch (error) {
+                  console.error('Error saving date:', error);
+                  alert('日付の保存に失敗しました。');
+              }
+          }
+
+          async function recordInspection() {
+              try {
+                  const currentDate = datePicker.selectedDates[0];
+                  if (!currentDate) {
+                      alert('日付を選択してください。');
+                      return;
+                  }
+
+                  const files = getProcessedFiles();
+                  if (!files.length) {
+                      alert('記録するファイルがありません。');
+                      return;
+                  }
+
+                  const inspector = document.getElementById('inspector')?.textContent || 'Unknown';
+
+                  const response = await fetch('/export/api/inspection/log', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                          date: formatDate(currentDate),
+                          fileCount: files.length,
+                          inspector,
+                          notes: '',
+                          files
+                      })
+                  });
+
+                  const result = await response.json();
+                  if (result.success) {
+                      alert(`検査記録が保存されました。\n日付: ${formatDate(currentDate)}\n処理済ファイル: ${files.length}個`);
+                      await updateCompletedFilesUI();
+                  } else {
+                      throw new Error(result.error || '記録の保存に失敗しました。');
+                  }
+              } catch (error) {
+                  console.error('Error recording inspection:', error);
+                  alert(`エラーが発生しました: ${error.message}`);
+              }
+          }
+
+          function getProcessedFiles() {
+              return Array.from(document.querySelectorAll('table tbody tr:nth-child(n+7)'))
+                  .map(row => row.cells[0].textContent.trim())
+                  .filter(Boolean);
+          }
+
+          async function updateCompletedFilesUI() {
+              try {
+                  const response = await fetch('/export/api/completed-files');
+                  const completedFiles = await response.json();
+
+                  document.querySelectorAll('table tbody tr:nth-child(n+7)').forEach(row => {
+                      const fileName = row.cells[0].textContent.trim();
+                      if (completedFiles.includes(fileName)) {
+                          row.classList.add('completed-inspection');
+                          row.style.backgroundColor = '#e8f5e9';
+                      }
+                  });
+              } catch (error) {
+                  console.error('Error updating completed files UI:', error);
+              }
+          }
+
+          function formatDate(date) {
+              return date.toLocaleDateString('ja-JP', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+              }).replace(/\//g, '/');
+          }
+
+          // Event Listeners
+          recordButton.addEventListener('click', recordInspection);
+
+          // Initialize UI
+          updateCompletedFilesUI();
+      });
     </script>
-</body>
+  </body>
 </html>

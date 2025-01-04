@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>検査ログ</title>
+    <style>
+      .log-container {
+        margin: 20px;
+        padding: 20px;
+        border: 1px solid #ccc;
+      }
+      .log-entry {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #f5f5f5;
+      }
+      .log-date {
+        font-weight: bold;
+        color: #333;
+      }
+      .log-details {
+        margin-top: 5px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="log-container">
+      <h2>検査ログ一覧</h2>
+      <% logs.forEach(log => { %>
+      <div class="log-entry">
+        <div class="log-date">
+          <%= new Date(log.date).toLocaleDateString('ja-JP') %>
+        </div>
+        <div class="log-details">
+          <div>検査数: <%= log.fileCount %>個</div>
+          <div>担当者: <%= log.inspector %></div>
+          <% if (log.notes) { %>
+          <div>備考: <%= log.notes %></div>
+          <% } %>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </body>
+</html>
