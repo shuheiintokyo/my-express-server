@@ -5,7 +5,8 @@ const router = express.Router();
 
 class InspectionLogger {
   constructor() {
-    this.logPath = path.join(__dirname, "logs", "inspection-logs.json");
+    this.logPath = path.join(__dirname, "..", "logs", "inspection-logs.json");
+    console.log("Initializing InspectionLogger with path:", this.logPath);
     this.ensureLogFile();
   }
 

@@ -471,461 +471,560 @@
       <button onclick="importWeights()">重量データ インポート</button>
     </div>
 
+    <div id="inspectionLogsContainer" class="logs-container no-print">
+      <div class="logs-header" onclick="toggleLogs()">
+        <h3>検査記録履歴 <span id="logsCount"></span></h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div id="logsContent" class="logs-content hidden">
+        <!-- Logs will be dynamically inserted here -->
+      </div>
+      
+      <style>
+        .logs-container {
+          margin-top: 40px;
+          margin-bottom: 20px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+        }
+
+        .logs-header {
+          padding: 15px;
+          background-color: #f5f5f5;
+          cursor: pointer;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .logs-header h3 {
+          margin: 0;
+          font-size: 16px;
+        }
+
+        .logs-content {
+          padding: 15px;
+        }
+
+        .log-entry {
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          padding: 15px;
+          margin-bottom: 15px;
+          background-color: #fff;
+        }
+
+        .log-entry:last-child {
+          margin-bottom: 0;
+        }
+
+        .log-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 10px;
+        }
+
+        .log-item {
+          margin-bottom: 5px;
+        }
+
+        .log-label {
+          font-weight: bold;
+          font-size: 12px;
+          color: #666;
+        }
+
+        .log-value {
+          font-size: 14px;
+        }
+
+        .log-files {
+          grid-column: 1 / -1;
+          word-break: break-all;
+        }
+
+        .log-timestamp {
+          grid-column: 1 / -1;
+          text-align: right;
+          font-size: 12px;
+          color: #666;
+        }
+
+        .hidden {
+          display: none;
+        }
+
+        .toggle-icon {
+          transition: transform 0.3s ease;
+        }
+
+        .toggle-icon.open {
+          transform: rotate(180deg);
+        }
+
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+        }
+      </style>
+    
+
     <script>
-                    // Initialize measurement limits
-                    const measurementLimits = {
-                        0: { min: 8.0, max: 8.4 },
-                        1: { min: 37.2, max: 37.8 },
-                        2: { min: 15.7, max: 16.1 },
-                        3: { min: 23.9, max: 24.3 },
-                        6: { min: 3.1, max: 3.3 },
-                        7: { min: 7.8, max: 8.2 },
-                        8: { min: 4.9, max: 5.1 },
-                        9: { min: 29.8, max: 30.2 },
-                        10: { min: 154.9, max: 155.9 },
-                        11: { min: 82.8, max: 83.4 }
-                    };
+        // Initialize measurement limits
+        const measurementLimits = {
+            0: { min: 8.0, max: 8.4 },
+            1: { min: 37.2, max: 37.8 },
+            2: { min: 15.7, max: 16.1 },
+            3: { min: 23.9, max: 24.3 },
+            6: { min: 3.1, max: 3.3 },
+            7: { min: 7.8, max: 8.2 },
+            8: { min: 4.9, max: 5.1 },
+            9: { min: 29.8, max: 30.2 },
+            10: { min: 154.9, max: 155.9 },
+            11: { min: 82.8, max: 83.4 }
+        };
 
-                    // Initialize measurement mapping
-                    const measurementMap = {
-                        103: 0,  // ①
-                        99: 1,   // ②
-                        177: 2,  // ③
-                        158: 3,  // ④
-                        114: 6,  // ⑥
-                        182: 7,  // ⑥
-                        193: 8,  // ⑥
-                        79: 9,   // ⑦
-                        148: 10, // ⑧
-                        174: 11  // ⑨
-                    };
+        // Initialize measurement mapping
+        const measurementMap = {
+            103: 0,  // ①
+            99: 1,   // ②
+            177: 2,  // ③
+            158: 3,  // ④
+            114: 6,  // ⑥
+            182: 7,  // ⑥
+            193: 8,  // ⑥
+            79: 9,   // ⑦
+            148: 10, // ⑧
+            174: 11  // ⑨
+        };
 
-                    let currentFileIndex = 0;
-                    let inspectionData = <%- JSON.stringify(data || []) %>;
+        let currentFileIndex = 0;
+        let inspectionData = <%- JSON.stringify(data || []) %>;
 
-                    function applyValues() {
-                        const buttons = document.querySelectorAll('.toggle-button');
-                        const input = document.querySelector('.number-input');
-                        const values = [];
+        function applyValues() {
+            const buttons = document.querySelectorAll('.toggle-button');
+            const input = document.querySelector('.number-input');
+            const values = [];
 
-                        buttons.forEach(button => {
-                            values.push(button.textContent);
-                        });
-                        values.push(input.value);
+            buttons.forEach(button => {
+                values.push(button.textContent);
+            });
+            values.push(input.value);
 
-                        fetch('/api/inspection/apply', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                fileIndex: currentFileIndex,
-                                values: values
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Update the table row
-                                const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
-                                if (row) {
-                                    values.forEach((value, index) => {
-                                        const mappedIndex = [5, 6, 13, 14, 15][index];
-                                        if (mappedIndex !== undefined) {
-                                            const cell = row.children[mappedIndex];
-                                            if (cell) {
-                                                cell.textContent = value || '-';
-                                            }
-                                        }
-                                    });
-                                }
-                                // Show success message
-                                alert('値を反映しました');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error applying inspection values:', error);
-                            alert('エラーが発生しました');
-                        });
-                    }
-
-                    const style = document.createElement('style');
-                    style.textContent = `
-                    .apply-button {
-                        background-color: #4CAF50;
-                        color: white;
-                        padding: 8px 16px;
-                        border: none;
-                        border-radius: 4px;
-                        cursor: pointer;
-                    }
-                    .apply-button:hover {
-                        background-color: #45a049;
-                    }
-                    .navigation-buttons {
-                        display: flex;
-                        gap: 10px;
-                        margin-top: 10px;
-                    }
-                    .hidden {
-                    display: none !important;
-                    }
-                    `;
-                    document.head.appendChild(style);
-
-                    function getMeasurements(filteredValues, selected_indices) {
-                        if (!Array.isArray(filteredValues) || !Array.isArray(selected_indices)) {
-                            console.error('Invalid input: filteredValues and selected_indices must be arrays');
-                            return Array(16).fill('-');
-                        }
-
-                        const measurements = Array(16).fill('-');
-
-                        try {
-                            filteredValues.forEach((value, index) => {
-                                if (index >= selected_indices.length) return;
-                                const columnIndex = selected_indices[index];
-
-                                if (tableIndex !== undefined && value !== '' && value != null) {
-                                    const numberValue = Number(value);
-                                    if (isNaN(numberValue)) {
-                                        console.warn(`Invalid number value at index ${index}: ${value}`);
-                                        return;
-                                    }
-
-                                    const numValue = Math.abs(numberValue).toFixed(2);
-                                    const limits = measurementLimits[tableIndex];
-                                    const isOutOfRange = limits && (numValue < limits.min || numValue > limits.max);
-
-                                    measurements[tableIndex] = isOutOfRange
-                                        ? `<span class="out-of-range">${numValue}</span>`
-                                        : `<span class="measurement">${numValue}</span>`;
-                                }
-                            });
-                        } catch (error) {
-                            console.error('Error in getMeasurements:', error);
-                            return Array(16).fill('-');
-                        }
-
-                        return measurements;
-                    }
-
-                    function toggleInspector() {
-                        const controls = document.getElementById('inspectionControls');
-                        controls.classList.toggle('hidden');
-                        updateCurrentFile();
-                    }
-
-                    function updateCurrentFile() {
-                        const fileElement = document.getElementById('currentFile');
-                        if (inspectionData && inspectionData.length > 0) {
-                            fileElement.textContent = inspectionData[currentFileIndex].fileName;
-                        }
-                    }
-
-                    function toggleState(button) {
-                        const states = ['', '合', '否'];
-                        const colors = ['', 'toggle-green', 'toggle-red'];
-
-                        let currentStateIndex = states.indexOf(button.textContent);
-                        currentStateIndex = (currentStateIndex + 1) % states.length;
-
-                        button.textContent = states[currentStateIndex];
-                        button.className = 'toggle-button ' + colors[currentStateIndex];
-
-                        updateInspectionValue(button.dataset.index, states[currentStateIndex]);
-                    }
-
-                    function updateValue(input) {
-                        const value = parseFloat(input.value);
-                        if (!isNaN(value)) {
-                            updateInspectionValue(input.dataset.index, value.toFixed(1));
-                        }
-                    }
-
-                    function updateInspectionValue(index, value) {
-                        fetch('/api/inspection/update', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                fileIndex: currentFileIndex,
-                                valueIndex: parseInt(index),
-                                value: value
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
-                                if (row) {
-                                    const cell = row.children[parseInt(index)];
-                                    if (cell) {
-                                        cell.textContent = value;
-                                    }
-                                }
-                            }
-                        })
-                        .catch(error => console.error('Error updating inspection value:', error));
-                    }
-
-                    // Add event listeners for editable fields
-                    document.querySelectorAll('.editable').forEach(element => {
-                        element.addEventListener('blur', function() {
-                            const id = this.id;
-                            const value = this.textContent;
-
-                            // Save to backend if needed
-                            fetch('/api/header/update', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    field: id,
-                                    value: value
-                                })
-                            })
-                            .then(response => response.json())
-                            .catch(error => console.error('Error updating header value:', error));
-                        });
-
-                        element.addEventListener('keydown', function(e) {
-                            if (e.key === 'Enter') {
-                                e.preventDefault();
-                                this.blur();
-                            }
-                        });
-                    });
-
-
-                    function updateInspectionControls() {
-                        const currentData = inspectionData[currentFileIndex];
-                        const buttons = document.querySelectorAll('.toggle-button');
-                        const input = document.querySelector('.number-input');
-
-                        // Reset all buttons and input first
-                        buttons.forEach(button => {
-                            button.textContent = '-';
-                            button.className = 'toggle-button';
-                        });
-                        input.value = '';
-
-                        // Update with current data if available
-                        if (currentData && currentData.inspectionValues) {
-                            buttons.forEach((button, index) => {
-                                const value = currentData.inspectionValues[index];
-                                if (value === '合' || value === '否') {
-                                    button.textContent = value;
-                                    button.className = `toggle-button ${value === '合' ? 'toggle-green' : 'toggle-red'}`;
-                                }
-                            });
-
-                            // Update number input if value exists
-                            if (currentData.inspectionValues[4] !== undefined) {
-                                input.value = currentData.inspectionValues[4];
-                            }
-                        }
-                    }
-
-                    function nextFile() {
-                        if (currentFileIndex < inspectionData.length - 1) {
-                            applyValues(false);  // Don't close when navigating
-                            currentFileIndex++;
-                            updateCurrentFile();
-                            updateInspectionControls();
-                        }
-                    }
-
-                    function previousFile() {
-                        if (currentFileIndex > 0) {
-                            applyValues(false);  // Don't close when navigating
-                            currentFileIndex--;
-                            updateCurrentFile();
-                            updateInspectionControls();
-                        }
-                    }
-
-                    function applyValues(shouldClose = false) {  // Add parameter to control closing behavior
-                        const buttons = document.querySelectorAll('.toggle-button');
-                        const input = document.querySelector('.number-input');
-                        const values = [];
-                        const controls = document.getElementById('inspectionControls');
-
-                        buttons.forEach(button => {
-                            values.push(button.textContent);
-                        });
-                        values.push(input.value);
-
-                        // Store values in inspectionData
-                        if (!inspectionData[currentFileIndex].inspectionValues) {
-                            inspectionData[currentFileIndex].inspectionValues = [];
-                        }
+            fetch('/api/inspection/apply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fileIndex: currentFileIndex,
+                    values: values
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the table row
+                    const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
+                    if (row) {
                         values.forEach((value, index) => {
-                            inspectionData[currentFileIndex].inspectionValues[index] = value;
-                        });
-
-                        // Update the table row immediately
-                        const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
-                        if (row) {
-                            values.forEach((value, index) => {
-                                const mappedIndex = [5, 6, 13, 14, 15][index];
-                                if (mappedIndex !== undefined) {
-                                    const cell = row.children[mappedIndex];
-                                    if (cell) {
-                                        cell.textContent = value || '-';
-                                    }
+                            const mappedIndex = [5, 6, 13, 14, 15][index];
+                            if (mappedIndex !== undefined) {
+                                const cell = row.children[mappedIndex];
+                                if (cell) {
+                                    cell.textContent = value || '-';
                                 }
-                            });
-                        }
-
-                        // Only hide controls if shouldClose is true
-                        if (shouldClose) {
-                            controls.classList.add('hidden');
-                        }
-
-                        // Try to save to server in the background
-                        fetch('/api/inspection/apply', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                fileIndex: currentFileIndex,
-                                values: values
-                            })
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
                             }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('Data saved successfully');
-                        })
-                        .catch(error => {
-                            console.warn('Warning: Could not save to server:', error);
                         });
                     }
+                    // Show success message
+                    alert('値を反映しました');
+                }
+            })
+            .catch(error => {
+                console.error('Error applying inspection values:', error);
+                alert('エラーが発生しました');
+            });
+        }
 
-                    // Also let's add a function to check if the controls are properly toggling
-                    function toggleInspector() {
-                        const controls = document.getElementById('inspectionControls');
-                        console.log('Toggle - Before:', controls.classList.contains('hidden')); // Debug log
-                        controls.classList.toggle('hidden');
-                        console.log('Toggle - After:', controls.classList.contains('hidden')); // Debug log
-                    }
-                    // Add keyboard navigation
-                    document.addEventListener('keydown', function(e) {
-                        if (!document.getElementById('inspectionControls').classList.contains('hidden')) {
-                            if (e.key === 'ArrowRight' || e.key === 'n') {
-                                nextFile();
-                            } else if (e.key === 'ArrowLeft' || e.key === 'p') {
-                                previousFile();
-                            }
+        const style = document.createElement('style');
+        style.textContent = `
+        .apply-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .apply-button:hover {
+            background-color: #45a049;
+        }
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .hidden {
+        display: none !important;
+        }
+        `;
+        document.head.appendChild(style);
+
+        function getMeasurements(filteredValues, selected_indices) {
+            if (!Array.isArray(filteredValues) || !Array.isArray(selected_indices)) {
+                console.error('Invalid input: filteredValues and selected_indices must be arrays');
+                return Array(16).fill('-');
+            }
+
+            const measurements = Array(16).fill('-');
+
+            try {
+                filteredValues.forEach((value, index) => {
+                    if (index >= selected_indices.length) return;
+                    const columnIndex = selected_indices[index];
+
+                    if (tableIndex !== undefined && value !== '' && value != null) {
+                        const numberValue = Number(value);
+                        if (isNaN(numberValue)) {
+                            console.warn(`Invalid number value at index ${index}: ${value}`);
+                            return;
                         }
-                    });
 
-                    // Initialize inspector if data is available
-                    if (inspectionData && inspectionData.length > 0) {
-                        document.getElementById('inspectorButton').disabled = false;
+                        const numValue = Math.abs(numberValue).toFixed(2);
+                        const limits = measurementLimits[tableIndex];
+                        const isOutOfRange = limits && (numValue < limits.min || numValue > limits.max);
 
-                        // Add navigation buttons
-                        const controls = document.querySelector('.inspection-controls');
-
-                        let navButtons = controls.querySelector('.navigation-buttons');
-
-                    if (!navButtons) { // Check if navigation buttons already exist
-                        navButtons = document.createElement('div');
-                        navButtons.classList.add('navigation-buttons'); // Add a class for identification
-                        navButtons.innerHTML = `
-                            <button onclick="previousFile()">前へ</button>
-                            <button onclick="nextFile()">次へ</button>
-                        `;
-                        controls.appendChild(navButtons);
-                    } }else {
-                        document.getElementById('inspectorButton').disabled = true;
-                    }
-
-                    // Add this to your existing script section
-                function applyMassApproval() {
-                // Get all rows except header rows (start from index 7)
-                const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
-
-                // For each row, update the cells at indices 5, 6, 13, and 14
-                rows.forEach((row, rowIndex) => {
-                    const targetIndices = [5, 6, 13, 14];
-                    targetIndices.forEach(colIndex => {
-                        const cell = row.children[colIndex];
-                        if (cell) {
-                            cell.textContent = '合';
-                        }
-                    });
-
-                    // Update the inspection data in memory
-                    if (inspectionData && inspectionData[rowIndex]) {
-                        if (!inspectionData[rowIndex].inspectionValues) {
-                            inspectionData[rowIndex].inspectionValues = [];
-                        }
-                        [5, 6, 13, 14].forEach((index, i) => {
-                            inspectionData[rowIndex].inspectionValues[i] = '合';
-                        });
+                        measurements[tableIndex] = isOutOfRange
+                            ? `<span class="out-of-range">${numValue}</span>`
+                            : `<span class="measurement">${numValue}</span>`;
                     }
                 });
+            } catch (error) {
+                console.error('Error in getMeasurements:', error);
+                return Array(16).fill('-');
+            }
 
-                // Save to server
-                fetch('/api/inspection/mass-approve', {
+            return measurements;
+        }
+
+        function toggleInspector() {
+            const controls = document.getElementById('inspectionControls');
+            controls.classList.toggle('hidden');
+            updateCurrentFile();
+        }
+
+        function updateCurrentFile() {
+            const fileElement = document.getElementById('currentFile');
+            if (inspectionData && inspectionData.length > 0) {
+                fileElement.textContent = inspectionData[currentFileIndex].fileName;
+            }
+        }
+
+        function toggleState(button) {
+            const states = ['', '合', '否'];
+            const colors = ['', 'toggle-green', 'toggle-red'];
+
+            let currentStateIndex = states.indexOf(button.textContent);
+            currentStateIndex = (currentStateIndex + 1) % states.length;
+
+            button.textContent = states[currentStateIndex];
+            button.className = 'toggle-button ' + colors[currentStateIndex];
+
+            updateInspectionValue(button.dataset.index, states[currentStateIndex]);
+        }
+
+        function updateValue(input) {
+            const value = parseFloat(input.value);
+            if (!isNaN(value)) {
+                updateInspectionValue(input.dataset.index, value.toFixed(1));
+            }
+        }
+
+        function updateInspectionValue(index, value) {
+            fetch('/api/inspection/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fileIndex: currentFileIndex,
+                    valueIndex: parseInt(index),
+                    value: value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
+                    if (row) {
+                        const cell = row.children[parseInt(index)];
+                        if (cell) {
+                            cell.textContent = value;
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error updating inspection value:', error));
+        }
+
+        // Add event listeners for editable fields
+        document.querySelectorAll('.editable').forEach(element => {
+            element.addEventListener('blur', function() {
+                const id = this.id;
+                const value = this.textContent;
+
+                // Save to backend if needed
+                fetch('/api/header/update', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        indices: [5, 6, 13, 14],
-                        value: '合'
+                        field: id,
+                        value: value
                     })
                 })
-                .catch(error => console.warn('Warning: Could not save mass approval to server:', error));
+                .then(response => response.json())
+                .catch(error => console.error('Error updating header value:', error));
+            });
+
+            element.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.blur();
                 }
+            });
+        });
 
-                // Add event listener for the quick approve button
-                document.getElementById('quickApproveButton').addEventListener('click', applyMassApproval);
 
-                function importWeights() {
-                    fetch('/export/api/weights')
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
+        function updateInspectionControls() {
+            const currentData = inspectionData[currentFileIndex];
+            const buttons = document.querySelectorAll('.toggle-button');
+            const input = document.querySelector('.number-input');
+
+            // Reset all buttons and input first
+            buttons.forEach(button => {
+                button.textContent = '-';
+                button.className = 'toggle-button';
+            });
+            input.value = '';
+
+            // Update with current data if available
+            if (currentData && currentData.inspectionValues) {
+                buttons.forEach((button, index) => {
+                    const value = currentData.inspectionValues[index];
+                    if (value === '合' || value === '否') {
+                        button.textContent = value;
+                        button.className = `toggle-button ${value === '合' ? 'toggle-green' : 'toggle-red'}`;
+                    }
+                });
+
+                // Update number input if value exists
+                if (currentData.inspectionValues[4] !== undefined) {
+                    input.value = currentData.inspectionValues[4];
+                }
+            }
+        }
+
+        function nextFile() {
+            if (currentFileIndex < inspectionData.length - 1) {
+                applyValues(false);  // Don't close when navigating
+                currentFileIndex++;
+                updateCurrentFile();
+                updateInspectionControls();
+            }
+        }
+
+        function previousFile() {
+            if (currentFileIndex > 0) {
+                applyValues(false);  // Don't close when navigating
+                currentFileIndex--;
+                updateCurrentFile();
+                updateInspectionControls();
+            }
+        }
+
+        function applyValues(shouldClose = false) {  // Add parameter to control closing behavior
+            const buttons = document.querySelectorAll('.toggle-button');
+            const input = document.querySelector('.number-input');
+            const values = [];
+            const controls = document.getElementById('inspectionControls');
+
+            buttons.forEach(button => {
+                values.push(button.textContent);
+            });
+            values.push(input.value);
+
+            // Store values in inspectionData
+            if (!inspectionData[currentFileIndex].inspectionValues) {
+                inspectionData[currentFileIndex].inspectionValues = [];
+            }
+            values.forEach((value, index) => {
+                inspectionData[currentFileIndex].inspectionValues[index] = value;
+            });
+
+            // Update the table row immediately
+            const row = document.querySelector(`table tbody tr:nth-child(${currentFileIndex + 7})`);
+            if (row) {
+                values.forEach((value, index) => {
+                    const mappedIndex = [5, 6, 13, 14, 15][index];
+                    if (mappedIndex !== undefined) {
+                        const cell = row.children[mappedIndex];
+                        if (cell) {
+                            cell.textContent = value || '-';
+                        }
+                    }
+                });
+            }
+
+            // Only hide controls if shouldClose is true
+            if (shouldClose) {
+                controls.classList.add('hidden');
+            }
+
+            // Try to save to server in the background
+            fetch('/api/inspection/apply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fileIndex: currentFileIndex,
+                    values: values
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data saved successfully');
+            })
+            .catch(error => {
+                console.warn('Warning: Could not save to server:', error);
+            });
+        }
+
+        // Also let's add a function to check if the controls are properly toggling
+        function toggleInspector() {
+            const controls = document.getElementById('inspectionControls');
+            console.log('Toggle - Before:', controls.classList.contains('hidden')); // Debug log
+            controls.classList.toggle('hidden');
+            console.log('Toggle - After:', controls.classList.contains('hidden')); // Debug log
+        }
+        // Add keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (!document.getElementById('inspectionControls').classList.contains('hidden')) {
+                if (e.key === 'ArrowRight' || e.key === 'n') {
+                    nextFile();
+                } else if (e.key === 'ArrowLeft' || e.key === 'p') {
+                    previousFile();
+                }
+            }
+        });
+
+        // Initialize inspector if data is available
+        if (inspectionData && inspectionData.length > 0) {
+            document.getElementById('inspectorButton').disabled = false;
+
+            // Add navigation buttons
+            const controls = document.querySelector('.inspection-controls');
+
+            let navButtons = controls.querySelector('.navigation-buttons');
+
+        if (!navButtons) { // Check if navigation buttons already exist
+            navButtons = document.createElement('div');
+            navButtons.classList.add('navigation-buttons'); // Add a class for identification
+            navButtons.innerHTML = `
+                <button onclick="previousFile()">前へ</button>
+                <button onclick="nextFile()">次へ</button>
+            `;
+            controls.appendChild(navButtons);
+        } }else {
+            document.getElementById('inspectorButton').disabled = true;
+        }
+
+        // Add this to your existing script section
+        function applyMassApproval() {
+        // Get all rows except header rows (start from index 7)
+        const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
+
+        // For each row, update the cells at indices 5, 6, 13, and 14
+        rows.forEach((row, rowIndex) => {
+            const targetIndices = [5, 6, 13, 14];
+            targetIndices.forEach(colIndex => {
+                const cell = row.children[colIndex];
+                if (cell) {
+                    cell.textContent = '合';
+                }
+            });
+
+        // Update the inspection data in memory
+        if (inspectionData && inspectionData[rowIndex]) {
+            if (!inspectionData[rowIndex].inspectionValues) {
+                inspectionData[rowIndex].inspectionValues = [];
+            }
+            [5, 6, 13, 14].forEach((index, i) => {
+                inspectionData[rowIndex].inspectionValues[i] = '合';
+                });
+            }
+        });
+
+        // Save to server
+        fetch('/api/inspection/mass-approve', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                indices: [5, 6, 13, 14],
+                value: '合'
+            })
+        })
+        .catch(error => console.warn('Warning: Could not save mass approval to server:', error));
+        }
+
+        // Add event listener for the quick approve button
+        document.getElementById('quickApproveButton').addEventListener('click', applyMassApproval);
+
+        function importWeights() {
+            fetch('/export/api/weights')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Update the table rows
+                        const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
+                        rows.forEach(row => {
+                            const fileNameCell = row.cells[0];
+                            const weightCell = row.cells[15]; // Last column
+                            if (weightCell) {
+                                const weight = data.weights?.find(w => w.fileName === fileNameCell.textContent.trim())?.weight;
+                                if (weight) {
+                                    weightCell.textContent = weight.toString();
+                                }
                             }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.success) {
-                                // Update the table rows
-                                const rows = document.querySelectorAll('table tbody tr:nth-child(n+7)');
-                                rows.forEach(row => {
-                                    const fileNameCell = row.cells[0];
-                                    const weightCell = row.cells[15]; // Last column
-                                    if (weightCell) {
-                                        const weight = data.weights?.find(w => w.fileName === fileNameCell.textContent.trim())?.weight;
-                                        if (weight) {
-                                            weightCell.textContent = weight.toString();
-                                        }
-                                    }
-                                });
-                                alert('重量データを正常にインポートしました。');
-                            } else {
-                                throw new Error(data.error || 'Failed to import weights');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error importing weights:', error);
-                            alert('重量データのインポート中にエラーが発生しました。');
                         });
-                }
-                    // Add this to your existing script section
-                document.addEventListener('DOMContentLoaded', function() {
+                        alert('重量データを正常にインポートしました。');
+                    } else {
+                        throw new Error(data.error || 'Failed to import weights');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error importing weights:', error);
+                    alert('重量データのインポート中にエラーが発生しました。');
+                });
+        }
+            // Add this to your existing script section
+        document.addEventListener('DOMContentLoaded', function() {
           const recordButton = document.getElementById('recordButton');
           const datePicker = flatpickr("#deliveryDatePicker", {
               locale: "ja",
@@ -1032,6 +1131,76 @@
           // Initialize UI
           updateCompletedFilesUI();
       });
+
+          function toggleLogs() {
+            const content = document.getElementById('logsContent');
+            const icon = document.querySelector('.toggle-icon');
+            content.classList.toggle('hidden');
+            icon.classList.toggle('open');
+          }
+
+          function formatDate(dateString) {
+            return new Date(dateString).toLocaleString('ja-JP', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
+
+          function renderLogs() {
+            fetch('/export/api/inspection/logs')
+              .then(response => response.json())
+              .then(data => {
+                const logsContent = document.getElementById('logsContent');
+                const logsCount = document.getElementById('logsCount');
+                if (data.logs && data.logs.length > 0) {
+                  logsCount.textContent = `(${data.logs.length}件)`;
+                  // Sort logs by timestamp in descending order (newest first)
+                  const sortedLogs = [...data.logs].sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp)
+                  );
+                  
+                  const logsHtml = sortedLogs.map(log => `
+                    <div class="log-entry">
+                      <div class="log-grid">
+                        <div class="log-item">
+                          <div class="log-label">検査日</div>
+                          <div class="log-value">${log.date}</div>
+                        </div>
+                        <div class="log-item">
+                          <div class="log-label">担当者</div>
+                          <div class="log-value">${log.inspector}</div>
+                        </div>
+                        <div class="log-item">
+                          <div class="log-label">ファイル数</div>
+                          <div class="log-value">${log.fileCount}個</div>
+                        </div>
+                        <div class="log-files">
+                          <div class="log-label">処理済みファイル</div>
+                          <div class="log-value">${log.files.join(', ')}</div>
+                        </div>
+                        <div class="log-timestamp">
+                          記録時刻: ${formatDate(log.timestamp)}
+                        </div>
+                      </div>
+                    </div>
+                  `).join('');
+                  logsContent.innerHTML = logsHtml;
+                } else {
+                  logsCount.textContent = '(0件)';
+                  logsContent.innerHTML = '<p>記録がありません。</p>';
+                }
+              })
+              .catch(error => {
+                console.error('Error fetching logs:', error);
+                logsContent.innerHTML = '<p>記録の取得中にエラーが発生しました。</p>';
+              });
+          }
+
+        // Initialize logs when the page loads
+        document.addEventListener('DOMContentLoaded', renderLogs);
     </script>
   </body>
 </html>

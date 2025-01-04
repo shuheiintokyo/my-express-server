@@ -4,6 +4,7 @@ const router = express.Router();
 const path = require("path");
 const fs = require("fs").promises;
 const { logger: inspectionLogger } = require("./inspection-logging");
+const debug = true;
 
 // Measurement configuration
 const measurementLimits = {
@@ -302,11 +303,34 @@ router.post("/api/inspection/log", async (req, res) => {
 
 router.get("/api/inspection/logs", async (req, res) => {
   try {
-    const logs = await InspectionLogger.getLogs();
-    res.json({ logs });
+    // Path to your logs file
+    const logsPath = path.join(__dirname, "..", "logs", "inspection-logs.json");
+
+    if (debug) {
+      console.log("Attempting to read logs from: ", logsPath);
+    }
+
+    try {
+      await fs.access(logsPath);
+    } catch (err) {
+      console.error("Logs file not found at:", logsPath);
+      return res.status(404).json({
+        error: "Logs file not found",
+        path: logsPath,
+      });
+    }
+
+    // Read the logs file
+    const logsData = await fs.readFile(logsPath, "utf8");
+    const logs = JSON.parse(logsData);
+
+    res.json(logs);
   } catch (error) {
     console.error("Error retrieving logs:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      error: "Internal server error",
+      details: error.message,
+    });
   }
 });
 
