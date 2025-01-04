@@ -481,6 +481,16 @@
       </div>
       
       <style>
+        @keyframes slideIn {
+        0% {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+            }
+        }
         .logs-container {
           margin-top: 40px;
           margin-bottom: 20px;
@@ -507,11 +517,15 @@
         }
 
         .log-entry {
-          border: 1px solid #e0e0e0;
-          border-radius: 4px;
-          padding: 15px;
-          margin-bottom: 15px;
-          background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            opacity: 0;  /* Start hidden */
+        }
+        .slide-in {
+            animation: slideIn 3s ease forwards;
         }
 
         .log-entry:last-child {
@@ -1150,54 +1164,82 @@
           }
 
           function renderLogs() {
-            fetch('/export/api/inspection/logs')
-              .then(response => response.json())
-              .then(data => {
-                const logsContent = document.getElementById('logsContent');
-                const logsCount = document.getElementById('logsCount');
-                if (data.logs && data.logs.length > 0) {
-                  logsCount.textContent = `(${data.logs.length}件)`;
-                  // Sort logs by timestamp in descending order (newest first)
-                  const sortedLogs = [...data.logs].sort((a, b) => 
-                    new Date(b.timestamp) - new Date(a.timestamp)
-                  );
-                  
-                  const logsHtml = sortedLogs.map(log => `
-                    <div class="log-entry">
-                      <div class="log-grid">
-                        <div class="log-item">
-                          <div class="log-label">検査日</div>
-                          <div class="log-value">${log.date}</div>
-                        </div>
-                        <div class="log-item">
-                          <div class="log-label">担当者</div>
-                          <div class="log-value">${log.inspector}</div>
-                        </div>
-                        <div class="log-item">
-                          <div class="log-label">ファイル数</div>
-                          <div class="log-value">${log.fileCount}個</div>
-                        </div>
-                        <div class="log-files">
-                          <div class="log-label">処理済みファイル</div>
-                          <div class="log-value">${log.files.join(', ')}</div>
-                        </div>
-                        <div class="log-timestamp">
-                          記録時刻: ${formatDate(log.timestamp)}
-                        </div>
-                      </div>
-                    </div>
-                  `).join('');
-                  logsContent.innerHTML = logsHtml;
-                } else {
-                  logsCount.textContent = '(0件)';
-                  logsContent.innerHTML = '<p>記録がありません。</p>';
-                }
-              })
-              .catch(error => {
-                console.error('Error fetching logs:', error);
-                logsContent.innerHTML = '<p>記録の取得中にエラーが発生しました。</p>';
-              });
-          }
+                fetch('/export/api/inspection/logs')
+                    .then(response => response.json())
+                    .then(data => {
+                        const logsContent = document.getElementById('logsContent');
+                        const logsCount = document.getElementById('logsCount');
+                        
+                        if (data.logs && data.logs.length > 0) {
+                            logsCount.textContent = `(${data.logs.length}件)`;
+                            
+                            // Sort logs by timestamp in descending order (newest first)
+                            const sortedLogs = [...data.logs].sort((a, b) => 
+                                new Date(b.timestamp) - new Date(a.timestamp)
+                            );
+
+                            // Clear existing content
+                            logsContent.innerHTML = '';
+
+                            // Create style element for dynamic delays
+                            const styleElement = document.createElement('style');
+                            document.head.appendChild(styleElement);
+
+                            // Generate animation delay rules
+                            const delayRules = sortedLogs.map((_, index) => `
+                                .log-entry:nth-child(${index + 1}) {
+                                    animation-delay: ${index * .5}s;
+                                }
+                            `).join('\n');
+
+                            // Add the rules to the style element
+                            styleElement.textContent = delayRules;
+
+                            // Create and append each log entry
+                            sortedLogs.forEach((log, index) => {
+                                const logEntry = document.createElement('div');
+                                logEntry.className = 'log-entry slide-in';
+                                logEntry.innerHTML = `
+                                    <div class="log-grid">
+                                        <div class="log-item">
+                                            <div class="log-label">検査日</div>
+                                            <div class="log-value">${log.date}</div>
+                                        </div>
+                                        <div class="log-item">
+                                            <div class="log-label">担当者</div>
+                                            <div class="log-value">${log.inspector}</div>
+                                        </div>
+                                        <div class="log-item">
+                                            <div class="log-label">ファイル数</div>
+                                            <div class="log-value">${log.fileCount}個</div>
+                                        </div>
+                                        <div class="log-files">
+                                            <div class="log-label">処理済みファイル</div>
+                                            <div class="log-value">${log.files.join(', ')}</div>
+                                        </div>
+                                        <div class="log-timestamp">
+                                            記録時刻: ${formatDate(log.timestamp)}
+                                        </div>
+                                    </div>
+                                `;
+                                logsContent.appendChild(logEntry);
+                            });
+
+                            // Clean up style element after animation completes
+                            setTimeout(() => {
+                                styleElement.remove();
+                            }, (sortedLogs.length * 2 + 3) * 1000); // Wait for all animations to complete
+
+                        } else {
+                            logsCount.textContent = '(0件)';
+                            logsContent.innerHTML = '<p>記録がありません。</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching logs:', error);
+                        logsContent.innerHTML = '<p>記録の取得中にエラーが発生しました。</p>';
+                    });
+            }
 
         // Initialize logs when the page loads
         document.addEventListener('DOMContentLoaded', renderLogs);
